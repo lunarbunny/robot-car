@@ -1,2 +1,2 @@
 # robot-car
-ICT2104 P4 - Team B2
+ICT2104 Team B2
