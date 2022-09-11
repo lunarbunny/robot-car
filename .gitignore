@@ -56,3 +56,6 @@ build/
 
 # VSCode
 .vscode/
+
+# Code Composer Studio
+msp432/Debug/
