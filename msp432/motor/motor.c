@@ -61,6 +61,14 @@ int MOTOR_getDirection(void) {
     return forward;
 }
 
+void MOTOR_turnLeft90Deg(void) {
+
+}
+
+void MOTOR_turnRight90Deg(void) {
+
+}
+
 void MOTOR_init(void)
 {
     // Motor driver control pins
@@ -75,7 +83,6 @@ void MOTOR_init(void)
     GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2, GPIO_PIN4, GPIO_PRIMARY_MODULE_FUNCTION);
     GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2, GPIO_PIN5, GPIO_PRIMARY_MODULE_FUNCTION);
 
-    /* Configuring Timer_A to have a period of approximately 80ms and an initial duty cycle of 10% of that (1000 ticks)  */
     Timer_A_generatePWM(TIMER_A0_BASE, &leftMotorPWMConfig);
     Timer_A_generatePWM(TIMER_A0_BASE, &rightMotorPWMConfig);
 }
