@@ -18,24 +18,24 @@ const Timer_A_UpModeConfig upConfig = {
 
 void ENCODER_init(void)
 {
-    // Left Encoder
-    GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P2, GPIO_PIN7);
-    GPIO_interruptEdgeSelect(GPIO_PORT_P2, GPIO_PIN7, GPIO_HIGH_TO_LOW_TRANSITION); //Trigger when high to low
-    GPIO_clearInterruptFlag(GPIO_PORT_P2, GPIO_PIN7);
-    GPIO_enableInterrupt(GPIO_PORT_P2, GPIO_PIN7);
+    // Left Encoder P2.7
+    // Right Encoder P2.6
+    GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN6);
+    GPIO_interruptEdgeSelect(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN6, GPIO_HIGH_TO_LOW_TRANSITION); // Trigger when high to low
 
-    // Right Encoder
-    GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P2, GPIO_PIN6);
-    GPIO_interruptEdgeSelect(GPIO_PORT_P2, GPIO_PIN6, GPIO_HIGH_TO_LOW_TRANSITION); //Trigger when high to low
-    GPIO_clearInterruptFlag(GPIO_PORT_P2, GPIO_PIN6);
-    GPIO_enableInterrupt(GPIO_PORT_P2, GPIO_PIN6);
+    GPIO_clearInterruptFlag(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN6);
+    GPIO_enableInterrupt(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN6);
 
     // Setup timer (1 second)
     Timer_A_configureUpMode(TIMER_A0_BASE, &upConfig);
     Timer_A_startCounter(TIMER_A0_BASE, TIMER_A_UP_MODE);
+    Timer_A_enableInterrupt(TIMER_A0_BASE);
 
-    // Enable interrupt on Port 2 and Timer A0
-    Interrupt_enableInterrupt(INT_PORT2 | INT_TA0_0);
+    // Enable interrupt
+    Interrupt_enableInterrupt(INT_PORT2);
+    Interrupt_enableInterrupt(INT_TA0_0);
+
+    SERIAL_printf("Encoder init\r\n");
 }
 
 int ENCODER_getLeftRotation(void)
@@ -64,19 +64,18 @@ void PORT2_IRQHandler(void)
     // Left Encoder
     if (status & GPIO_PIN7) {
         leftRotation++;
-        SERIAL_printf("R encoder interrupt");
+        SERIAL_printf("L encoder interrupt\r\n");
     }
 
     // Right Encoder
     if (status & GPIO_PIN6) {
         rightRotation++;
-        SERIAL_printf("L encoder interrupt");
+        SERIAL_printf("R encoder interrupt\r\n");
     }
 }
 
 void TA0_0_IRQHandler(void)
 {
-    Timer_A_clearCaptureCompareInterrupt(TIMER_A0_BASE,TIMER_A_CAPTURECOMPARE_REGISTER_0);
-
-    SERIAL_printf("1 second up");
+    Timer_A_clearCaptureCompareInterrupt(TIMER_A0_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0);
+    SERIAL_printf("1 second up\r\n");
 }

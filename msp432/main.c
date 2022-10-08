@@ -9,15 +9,15 @@ int main(void) {
 	WDT_A_holdTimer(); // Stop watchdog timer
 
 	// Initialize modules
+    SERIAL_init();
     MOTOR_init();
     ENCODER_init();
-    SERIAL_init();
 
     // Create PID contoller for motors
     PID* leftMotorPID = PID_create(0.1f, 0.01f, 0, 0, 0, 100);
     PID* rightMotorPID = PID_create(0.1f, 0.01f, 0, 0, 0, 100);
 
-    SERIAL_printf("Initialization done");
+    SERIAL_printf("Initialization done\r\n");
 
 	// For testing: Motor control using buttons and LED indicators
 	GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0); // LED 1 indicate motor direction, ON = Forward ; OFF = Reverse
@@ -35,10 +35,7 @@ int main(void) {
 	Interrupt_enableMaster();
 
 	while (1) {
-	    PCM_gotoLPM0();
-
-
-
+	    PCM_gotoLPM3InterruptSafe();
 
 	    //float leftMotorDutyCycle = PID_run(&leftMotorPID, );
 	    //float rightMotorDutyCycle = PID_run(&rightMotorPID, );

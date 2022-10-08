@@ -39,9 +39,8 @@ void SERIAL_init(void)
     /* Enabling interrupts (Rx) */
     UART_enableInterrupt(EUSCI_A0_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT);
     Interrupt_enableInterrupt(INT_EUSCIA0);
-    Interrupt_enableMaster();
 
-    SERIAL_printf("UART initialized\n\r");
+    SERIAL_printf("UART init\r\n");
 }
 
 /* EUSCI A0 UART ISR */

@@ -1,6 +1,7 @@
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 
 #include "motor.h"
+#include "serial/serial.h"
 
 // === PWM Configuration ===
 // SMCLK 3MHz
@@ -93,4 +94,6 @@ void MOTOR_init(void)
 
     Timer_A_generatePWM(TIMER_A0_BASE, &leftMotorPWMConfig);
     Timer_A_generatePWM(TIMER_A0_BASE, &rightMotorPWMConfig);
+
+    SERIAL_printf("Motor init\r\n");
 }
