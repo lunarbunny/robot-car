@@ -1,5 +1,7 @@
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 
+#include "motor.h"
+
 // === PWM Configuration ===
 // SMCLK 3MHz
 // Divider 6, Clock 500 kHz, period = 2us
@@ -25,48 +27,53 @@ Timer_A_PWMConfig rightMotorPWMConfig = {
         0
 };
 
-void MOTOR_setSpeed(float dutyCycle) {
+void MOTOR_setSpeed(float dutyCycle, int motor) {
     // Set the duty cycle in percentage
-    leftMotorPWMConfig.dutyCycle = (dutyCycle / 100) * TIMERPERIOD;
-    rightMotorPWMConfig.dutyCycle = (dutyCycle / 100) * TIMERPERIOD;
-
-    Timer_A_generatePWM(TIMER_A0_BASE, &leftMotorPWMConfig);
-    Timer_A_generatePWM(TIMER_A0_BASE, &rightMotorPWMConfig);
+    if (motor & MOTOR_LEFT) {
+        leftMotorPWMConfig.dutyCycle = (dutyCycle / 100) * TIMERPERIOD;
+        Timer_A_generatePWM(TIMER_A0_BASE, &leftMotorPWMConfig);
+    }
+    if (motor & MOTOR_RIGHT) {
+        rightMotorPWMConfig.dutyCycle = (dutyCycle / 100) * TIMERPERIOD;
+        Timer_A_generatePWM(TIMER_A0_BASE, &rightMotorPWMConfig);
+    }
 }
 
-uint_fast16_t MOTOR_getSpeed() {
+float MOTOR_getSpeed() {
     // Return the duty cycle in percentage
     return (leftMotorPWMConfig.dutyCycle / 100) * TIMERPERIOD;
 }
 
-int forward = -1;
+int direction = -1;
 
-void MOTOR_forward(void) {
-    GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN5);
-    GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN4);
-    GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN0);
-    GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN2);
-    forward = 1;
-}
-
-void MOTOR_reverse(void) {
-    GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN5);
-    GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN4);
-    GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN0);
-    GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN2);
-    forward = 0;
+void MOTOR_setDirection(int dir) {
+    if (dir == MOTOR_DIR_FORWARD) {
+        GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN5);
+        GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN4);
+        GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN0);
+        GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN2);
+        direction = MOTOR_DIR_FORWARD;
+    } else if (dir == MOTOR_DIR_REVERSE) {
+        GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN5);
+        GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN4);
+        GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN0);
+        GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN2);
+        direction = MOTOR_DIR_REVERSE;
+    }
 }
 
 int MOTOR_getDirection(void) {
-    return forward;
+    return direction;
 }
 
-void MOTOR_turnLeft90Deg(void) {
-
+void MOTOR_turnLeft(void) {
+    MOTOR_setSpeed(MOTOR_getSpeed() / 2, MOTOR_LEFT);
+    MOTOR_setSpeed(MOTOR_getSpeed(), MOTOR_RIGHT);
 }
 
-void MOTOR_turnRight90Deg(void) {
-
+void MOTOR_turnRight(void) {
+    MOTOR_setSpeed(MOTOR_getSpeed(), MOTOR_LEFT);
+    MOTOR_setSpeed(MOTOR_getSpeed() / 2, MOTOR_RIGHT);
 }
 
 void MOTOR_init(void)
@@ -76,8 +83,9 @@ void MOTOR_init(void)
     GPIO_setAsOutputPin(GPIO_PORT_P4, GPIO_PIN4); // MotorA IN2
     GPIO_setAsOutputPin(GPIO_PORT_P4, GPIO_PIN0); // MotorB IN3
     GPIO_setAsOutputPin(GPIO_PORT_P4, GPIO_PIN2); // MotorB IN4
-    // Set motor control pins
-    MOTOR_forward(); // Does not run the motor, only set the direction
+    // Set motor default state
+    MOTOR_setDirection(MOTOR_DIR_FORWARD);
+    MOTOR_setSpeed(0.f, MOTOR_LEFT | MOTOR_RIGHT);
 
     // PWM control pins
     GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2, GPIO_PIN4, GPIO_PRIMARY_MODULE_FUNCTION);
