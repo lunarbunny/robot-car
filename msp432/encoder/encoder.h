@@ -8,10 +8,8 @@
 #define encoder_H_
 
 void ENCODER_init(void);
-int ENCODER_getLeftRotation(void);
-int ENCODER_getRightRotation(void);
-void ENCODER_resetLeft(void);
-void ENCODER_resetRight(void);
+float ENCODER_getLeftWheelSpeed(void);
+float ENCODER_getRightWheelSpeed(void);
 
 #endif
 

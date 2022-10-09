@@ -9,6 +9,7 @@ typedef struct _PID {
     // Controller memory
     float integral;
     float lastError;
+    float lastInput;
     unsigned char saturating; // Boolean
 } PID;
 

@@ -15,7 +15,7 @@ const eUSCI_UART_ConfigV1 uartConfig =
         EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION,  // Oversampling
 };
 
-void SERIAL_printf(unsigned char * TxArray)
+void SERIAL_printf(char * TxArray)
 {
     unsigned short i = 0;
     while(*(TxArray+i))

@@ -1,9 +1,13 @@
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
+#include <stdio.h>
 
 #include "motor/motor.h"
 #include "motor/pid.h"
 #include "encoder/encoder.h"
 #include "serial/serial.h"
+
+PID* leftMotorPID = NULL;
+PID* rightMotorPID = NULL;
 
 int main(void) {
 	WDT_A_holdTimer(); // Stop watchdog timer
@@ -14,8 +18,8 @@ int main(void) {
     ENCODER_init();
 
     // Create PID contoller for motors
-    PID* leftMotorPID = PID_create(0.1f, 0.01f, 0, 0, 0, 100);
-    PID* rightMotorPID = PID_create(0.1f, 0.01f, 0, 0, 0, 100);
+    leftMotorPID = PID_create(5.0f, 2.5f, 0.5f, 0, 0, 100);
+    rightMotorPID = PID_create(5.0f, 2.5f, 0.5f, 0, 0, 100);
 
     SERIAL_printf("Initialization done\r\n");
 
@@ -31,21 +35,34 @@ int main(void) {
 	GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1 | GPIO_PIN4);
 	Interrupt_enableInterrupt(INT_PORT1);
 
-	// Enable master interrupt
 	Interrupt_enableMaster();
 
 	while (1) {
-	    PCM_gotoLPM3InterruptSafe();
+	    float leftWheelSpeed = ENCODER_getLeftWheelSpeed();
+	    float rightWheelSpeed = ENCODER_getRightWheelSpeed();
 
-	    //float leftMotorDutyCycle = PID_run(&leftMotorPID, );
-	    //float rightMotorDutyCycle = PID_run(&rightMotorPID, );
+	    float leftMotorDutyCycle = PID_run(leftMotorPID, leftWheelSpeed);
+	    float rightMotorDutyCycle = PID_run(rightMotorPID, rightWheelSpeed);
+
+	    MOTOR_setSpeed(leftMotorDutyCycle, MOTOR_LEFT);
+	    //MOTOR_setSpeed(rightMotorDutyCycle / 5, MOTOR_RIGHT);
+
+	    char printBuffer[50];
+	    snprintf(printBuffer, sizeof(printBuffer), "1) SPD L: %.2f | SPD R: %.2f \r\n", leftWheelSpeed, rightWheelSpeed);
+	    SERIAL_printf(printBuffer);
+	    snprintf(printBuffer, sizeof(printBuffer), "2) PID L: %.2f | PID R: %.2f \r\n", leftMotorDutyCycle, rightMotorDutyCycle);
+	    SERIAL_printf(printBuffer);
+
+	    int i;
+	    for (i = 0; i < 500000; i++);
+	    //PCM_gotoLPM3InterruptSafe();
 	}
 }
 
 int mode = 0;
 
 void PORT1_IRQHandler(void) {
-    uint32_t status = GPIO_getEnabledInterruptStatus(GPIO_PORT_P1);\
+    uint32_t status = GPIO_getEnabledInterruptStatus(GPIO_PORT_P1);
     GPIO_clearInterruptFlag(GPIO_PORT_P1, status);
 
     int motorOn = MOTOR_getSpeed() > 0.f;
@@ -67,9 +84,15 @@ void PORT1_IRQHandler(void) {
             case 0:
                 // Button 1: Toggle motor
                 if (motorOn) {
-                    MOTOR_setSpeed(0.f, MOTOR_LEFT | MOTOR_RIGHT);
+                    //MOTOR_setSpeed(0.f, MOTOR_LEFT | MOTOR_RIGHT);
+                    leftMotorPID->setPoint = 0.f;
+                    //rightMotorPID->setPoint = 0.f;
+                    SERIAL_printf("Setpoint = 0% \r\n");
                 } else {
-                    MOTOR_setSpeed(100.f, MOTOR_LEFT | MOTOR_RIGHT);
+                    //MOTOR_setSpeed(100.f, MOTOR_LEFT | MOTOR_RIGHT);
+                    leftMotorPID->setPoint = 10.f;
+                    //rightMotorPID->setPoint = 100.f;
+                    SERIAL_printf("Setpoint = 100% \r\n");
                 }
                 break;
             case 1:
