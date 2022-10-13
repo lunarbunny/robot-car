@@ -45,7 +45,7 @@ int main(void) {
 	    float rightMotorDutyCycle = PID_run(rightMotorPID, rightWheelSpeed);
 
 	    MOTOR_setSpeed(leftMotorDutyCycle, MOTOR_LEFT);
-	    //MOTOR_setSpeed(rightMotorDutyCycle / 5, MOTOR_RIGHT);
+	    MOTOR_setSpeed(rightMotorDutyCycle, MOTOR_RIGHT);
 
 	    char printBuffer[50];
 	    snprintf(printBuffer, sizeof(printBuffer), "1) SPD L: %.2f | SPD R: %.2f \r\n", leftWheelSpeed, rightWheelSpeed);
@@ -86,12 +86,12 @@ void PORT1_IRQHandler(void) {
                 if (motorOn) {
                     //MOTOR_setSpeed(0.f, MOTOR_LEFT | MOTOR_RIGHT);
                     leftMotorPID->setPoint = 0.f;
-                    //rightMotorPID->setPoint = 0.f;
+                    rightMotorPID->setPoint = 0.f;
                     SERIAL_printf("Setpoint = 0% \r\n");
                 } else {
                     //MOTOR_setSpeed(100.f, MOTOR_LEFT | MOTOR_RIGHT);
                     leftMotorPID->setPoint = 10.f;
-                    //rightMotorPID->setPoint = 100.f;
+                    rightMotorPID->setPoint = 10.f;
                     SERIAL_printf("Setpoint = 100% \r\n");
                 }
                 break;

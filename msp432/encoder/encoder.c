@@ -20,11 +20,11 @@ const Timer_A_UpModeConfig upConfig = {
 void ENCODER_init(void)
 {
     // Left Encoder P2.7, Right Encoder P2.6
-    GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN6);
-    GPIO_interruptEdgeSelect(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN6, GPIO_HIGH_TO_LOW_TRANSITION); // Trigger when high to low
+    GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN3);
+    GPIO_interruptEdgeSelect(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN3, GPIO_HIGH_TO_LOW_TRANSITION); // Trigger when high to low
 
-    GPIO_clearInterruptFlag(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN6);
-    GPIO_enableInterrupt(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN6);
+    GPIO_clearInterruptFlag(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN3);
+    GPIO_enableInterrupt(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN3);
 
     // Setup timer (1 second)
     Timer_A_configureUpMode(TIMER_A1_BASE, &upConfig);
@@ -71,7 +71,7 @@ void PORT2_IRQHandler(void)
     }
 
     // Right Encoder
-    if (status & GPIO_PIN6) {
+    if (status & GPIO_PIN3) {
         rightRotation[encIndex]++;
         //SERIAL_printf("R encoder interrupt\r\n");
     }
