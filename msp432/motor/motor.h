@@ -11,9 +11,12 @@ void MOTOR_init(void);
 void MOTOR_initDebug(void);
 
 void MOTOR_setSpeed(float dutyCycle, int motor);
-float MOTOR_getSpeed();
+float MOTOR_getSpeed(int motor);
 
-void MOTOR_setDirection(int dir);
-int MOTOR_getDirection(void);
+void MOTOR_setDirection(int dir, int motor);
+int MOTOR_getDirection(int motor);
+
+void MOTOR_turnLeft(void);
+void MOTOR_turnRight(void);
 
 #endif

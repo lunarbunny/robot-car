@@ -40,41 +40,67 @@ void MOTOR_setSpeed(float dutyCycle, int motor) {
     }
 }
 
-float MOTOR_getSpeed() {
+float MOTOR_getSpeed(int motor) {
     // Return the duty cycle in percentage
-    return (leftMotorPWMConfig.dutyCycle / 100) * TIMERPERIOD;
-}
-
-int direction = -1;
-
-void MOTOR_setDirection(int dir) {
-    if (dir == MOTOR_DIR_FORWARD) {
-        GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN5);
-        GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN4);
-        GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN0);
-        GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN2);
-        direction = MOTOR_DIR_FORWARD;
-    } else if (dir == MOTOR_DIR_REVERSE) {
-        GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN5);
-        GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN4);
-        GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN0);
-        GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN2);
-        direction = MOTOR_DIR_REVERSE;
+    if (motor & MOTOR_LEFT) {
+        return (leftMotorPWMConfig.dutyCycle / 100) * TIMERPERIOD;
+    } else if (motor & MOTOR_RIGHT) {
+        return (leftMotorPWMConfig.dutyCycle / 100) * TIMERPERIOD;
+    } else {
+        return 0.f;
     }
 }
 
-int MOTOR_getDirection(void) {
-    return direction;
+int motorDirLeft = -1;
+int motorDirRight = -1;
+
+void MOTOR_setDirection(int dir, int motor) {
+    // Motor 1: PIN 5,4
+    // 01 = Forward, 10 = Reverse (Flipped because motor is also physically flipped)
+    // Motor 2: PIN 2,0
+    // 10 = Forward, 01 = Reverse
+    if (dir == MOTOR_DIR_FORWARD) {
+        if (motor & MOTOR_LEFT) {
+            GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN4);
+            GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN5);
+            motorDirLeft = MOTOR_DIR_FORWARD;
+        }
+        if (motor & MOTOR_RIGHT) {
+            GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN2);
+            GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN0);
+            motorDirRight = MOTOR_DIR_FORWARD;
+        }
+    } else if (dir == MOTOR_DIR_REVERSE) {
+        if (motor & MOTOR_LEFT) {
+            GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN4);
+            GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN5);
+            motorDirLeft = MOTOR_DIR_REVERSE;
+        }
+        if (motor & MOTOR_RIGHT) {
+            GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN2);
+            GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN0);
+            motorDirRight = MOTOR_DIR_REVERSE;
+        }
+    }
+}
+
+int MOTOR_getDirection(int motor) {
+    if (motor == MOTOR_LEFT) {
+        return motorDirLeft;
+    } else if (motor == MOTOR_RIGHT) {
+        return motorDirRight;
+    }
+    return -1;
 }
 
 void MOTOR_turnLeft(void) {
-    MOTOR_setSpeed(MOTOR_getSpeed() / 2, MOTOR_LEFT);
-    MOTOR_setSpeed(MOTOR_getSpeed(), MOTOR_RIGHT);
+    MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_LEFT);
+    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_RIGHT);
 }
 
 void MOTOR_turnRight(void) {
-    MOTOR_setSpeed(MOTOR_getSpeed(), MOTOR_LEFT);
-    MOTOR_setSpeed(MOTOR_getSpeed() / 2, MOTOR_RIGHT);
+    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT);
+    MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_RIGHT);
 }
 
 void MOTOR_init(void)
@@ -82,10 +108,10 @@ void MOTOR_init(void)
     // Motor driver control pins
     GPIO_setAsOutputPin(GPIO_PORT_P4, GPIO_PIN5); // MotorA IN1
     GPIO_setAsOutputPin(GPIO_PORT_P4, GPIO_PIN4); // MotorA IN2
-    GPIO_setAsOutputPin(GPIO_PORT_P4, GPIO_PIN0); // MotorB IN3
-    GPIO_setAsOutputPin(GPIO_PORT_P4, GPIO_PIN2); // MotorB IN4
+    GPIO_setAsOutputPin(GPIO_PORT_P4, GPIO_PIN2); // MotorB IN3
+    GPIO_setAsOutputPin(GPIO_PORT_P4, GPIO_PIN0); // MotorB IN4
     // Set motor default state
-    MOTOR_setDirection(MOTOR_DIR_FORWARD);
+    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
     MOTOR_setSpeed(0.f, MOTOR_LEFT | MOTOR_RIGHT);
 
     // PWM control pins
