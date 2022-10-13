@@ -59,3 +59,5 @@ build/
 
 # Code Composer Studio
 msp432/Debug/
+
+!msp432p401r.cmd
