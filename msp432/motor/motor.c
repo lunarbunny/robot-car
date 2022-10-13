@@ -56,29 +56,29 @@ int motorDirRight = -1;
 
 void MOTOR_setDirection(int dir, int motor) {
     // Motor 1: PIN 5,4
-    // 01 = Forward, 10 = Reverse (Flipped because motor is also physically flipped)
-    // Motor 2: PIN 2,0
     // 10 = Forward, 01 = Reverse
+    // Motor 2: PIN 2,0
+    // 01 = Forward, 10 = Reverse (Flipped because motor is also physically flipped)
     if (dir == MOTOR_DIR_FORWARD) {
         if (motor & MOTOR_LEFT) {
-            GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN4);
-            GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN5);
-            motorDirLeft = MOTOR_DIR_FORWARD;
-        }
-        if (motor & MOTOR_RIGHT) {
-            GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN2);
-            GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN0);
-            motorDirRight = MOTOR_DIR_FORWARD;
-        }
-    } else if (dir == MOTOR_DIR_REVERSE) {
-        if (motor & MOTOR_LEFT) {
-            GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN4);
             GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN5);
-            motorDirLeft = MOTOR_DIR_REVERSE;
+            GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN4);
+            motorDirLeft = MOTOR_DIR_FORWARD;
         }
         if (motor & MOTOR_RIGHT) {
             GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN2);
             GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN0);
+            motorDirRight = MOTOR_DIR_FORWARD;
+        }
+    } else if (dir == MOTOR_DIR_REVERSE) {
+        if (motor & MOTOR_LEFT) {
+            GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN5);
+            GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN4);
+            motorDirLeft = MOTOR_DIR_REVERSE;
+        }
+        if (motor & MOTOR_RIGHT) {
+            GPIO_setOutputHighOnPin(GPIO_PORT_P4, GPIO_PIN2);
+            GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN0);
             motorDirRight = MOTOR_DIR_REVERSE;
         }
     }
