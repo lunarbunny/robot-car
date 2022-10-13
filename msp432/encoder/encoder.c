@@ -10,7 +10,7 @@ int rightRotation[4];
 
 const Timer_A_UpModeConfig upConfig = {
         TIMER_A_CLOCKSOURCE_SMCLK,              // SMCLK Clock Source = 3Mhz
-        TIMER_A_CLOCKSOURCE_DIVIDER_16,         // TACLK = 3MHz / 64
+        TIMER_A_CLOCKSOURCE_DIVIDER_16,         // TACLK = 3MHz / 16 = 187500
         46875,                                  // 46875 ticks (CCR0)
         TIMER_A_TAIE_INTERRUPT_DISABLE,         // Disable Timer interrupt
         TIMER_A_CCIE_CCR0_INTERRUPT_ENABLE,    // Enable CCR0 interrupt
@@ -19,14 +19,14 @@ const Timer_A_UpModeConfig upConfig = {
 
 void ENCODER_init(void)
 {
-    // Left Encoder P2.7, Right Encoder P2.6
+    // Left Encoder P2.7, Right Encoder P2.3
     GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN3);
     GPIO_interruptEdgeSelect(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN3, GPIO_HIGH_TO_LOW_TRANSITION); // Trigger when high to low
 
     GPIO_clearInterruptFlag(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN3);
     GPIO_enableInterrupt(GPIO_PORT_P2, GPIO_PIN7 | GPIO_PIN3);
 
-    // Setup timer (1 second)
+    // Setup timer (0.25 second)
     Timer_A_configureUpMode(TIMER_A1_BASE, &upConfig);
     Timer_A_enableInterrupt(TIMER_A1_BASE);
 
