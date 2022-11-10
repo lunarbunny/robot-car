@@ -118,13 +118,18 @@ int main () {
             for(int i = 0; i < 9; i++)
             {
                 if(timeChanges[i] > h1) { 
+                    h3i = h2i;
+                    h2i = h1i;
                     h1i = i;
+
                     h3 = h2;                
                     h2 = h1;                
                     h1 = timeChanges[i];
                 }
                 else if (timeChanges[i] > h2){ 
+                    h3i = h2i;
                     h2i = i;
+
                     h3 = h2;                
                     h2 = timeChanges[i];  
                 }
@@ -154,9 +159,12 @@ int main () {
             }
 
             // PRINTING CHARBINARY 
-            if (compareArray(varcharStartEndStar, charStartEndStar)==0) {printf("MATCHES START END \n");} else {printf("DOESNT MATCH START END \n");}
-            if (compareArray(varcharStartEndStar, charSpace)==0) {printf("MATCHES SPACE \n");} else {printf("DOESNT MATCH SPACE \n");}
-            if (compareArray(varcharStartEndStar, letterA)==0) {printf("MATCHES A \n");} else {printf("DOESNT MATCH A \n");}
+            printf("\n ***** \t READING RESULT: \t *****\n");
+
+            if (compareArray(varcharStartEndStar, charStartEndStar)==0) {printf("* \n");}
+            if (compareArray(varcharStartEndStar, letterF)==0) {printf("F \n");}
+            if (compareArray(varcharStartEndStar, charSpace)==0) {printf("SPACE \n");} 
+            printf(" END READING RESULT: \n");
         }
 
         
@@ -166,7 +174,7 @@ int main () {
         {
             if (infraFlag == true) {
                 infraFlag = false; 
-                printf("T%i: %i\n", arrayVar, time_us_32()/1000);
+                printf("T%i: %i\n", arrayVar, time_us_32()/1000); 
                 charStartEndCheck[arrayVar] = time_us_32()/1000;
                 arrayVar += 1;
                 
