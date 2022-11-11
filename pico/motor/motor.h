@@ -9,13 +9,19 @@
 
 void MOTOR_init(void);
 
-void MOTOR_setSpeed(float dutyCycle, int motor);
-float MOTOR_getSpeed(int motor);
+void MOTOR_setSpeed(int8_t dutyCycle, int motor);
+uint16_t MOTOR_getSpeed(int motor);
 
 void MOTOR_setDirection(int dir, int motor);
 int MOTOR_getDirection(int motor);
 
 void MOTOR_turnLeft(void);
 void MOTOR_turnRight(void);
+
+int CMtoSteps(float cm);
+void TurnLeft();
+void TurnRight();
+void TurnAround();
+void MoveFoward(int interrupts);
 
 #endif
