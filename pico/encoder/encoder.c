@@ -3,8 +3,8 @@
 
 #include "encoder.h"
 
-#define GPIO_PIN_ENC_LEFT 11
-#define GPIO_PIN_ENC_RIGHT 12
+#define GPIO_PIN_ENC_LEFT 2
+#define GPIO_PIN_ENC_RIGHT 3
 
 volatile int encIndex = 0;
 int leftRotation[4];

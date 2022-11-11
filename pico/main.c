@@ -58,11 +58,11 @@ int main()
             break;
         case 'Q': // Slow down (direct motor control, need to disable PID!)
             MOTOR_setSpeed(MOTOR_getSpeed(MOTOR_LEFT) - 20, MOTOR_LEFT | MOTOR_RIGHT);
-            printf("> [Motor] Target Speed %u \n", MOTOR_getSpeed(MOTOR_LEFT));
+            printf("> [Motor] Set Speed %u \n", MOTOR_getSpeed(MOTOR_LEFT));
             break;
         case 'E': // Speed up (direct motor control, need to disable PID!)
             MOTOR_setSpeed(MOTOR_getSpeed(MOTOR_LEFT) + 20, MOTOR_LEFT | MOTOR_RIGHT);
-            printf("> [Motor] Target Speed %u \n", MOTOR_getSpeed(MOTOR_LEFT));
+            printf("> [Motor] Set Speed %u \n", MOTOR_getSpeed(MOTOR_LEFT));
             break;
         case 'w': // Forward
             MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
@@ -73,19 +73,19 @@ int main()
             printf("> [Motor] Reverse \n");
             break;
         case 'a': // Left turn (in place)
-            TurnLeft();
+            MOTOR_spotTurn(MOTOR_TURN_ANTICLOCKWISE, 90);
             printf("> [Motor] Left Turn \n");
             break;
         case 'd': // Right turn (in place)
-            TurnRight();
+            MOTOR_spotTurn(MOTOR_TURN_CLOCKWISE, 90);
             printf("> [Motor] Right Turn \n");
             break;
          case 'x': // Move Foward (10 cm)
-            MoveFoward(CMtoSteps(10));
+            MOTOR_moveFoward(CMtoSteps(10));
             printf("> [Motor] Move Foward \n");
             break;
          case 't': // Turn Around
-            TurnAround();
+            MOTOR_spotTurn(MOTOR_TURN_CLOCKWISE, 180);
             printf("> [Motor] Move Foward \n");
             break;
         }
