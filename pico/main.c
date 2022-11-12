@@ -112,7 +112,7 @@ int main()
             printf("> [Motor] Right Turn \n");
             break;
         case 'x': // Move Foward (10 cm)
-            MOTOR_moveFoward(CMtoSteps(10));
+            MOTOR_moveFoward(10);
             printf("> [Motor] Move Foward \n");
             break;
         case 't': // Turn Around

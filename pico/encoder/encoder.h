@@ -5,12 +5,7 @@ void ENCODER_init(void);
 float ENCODER_getLeftWheelSpeed(void);
 float ENCODER_getRightWheelSpeed(void);
 
-//Global Variables
-extern volatile int leftEncoderISR;
-extern volatile int rightEncoderISR;
-
-void resetEncoderISRCount();
-int getLeftISRCount();
-int getRightISRCount();
+void ENCODER_waitForISRInterrupts(uint target);
+int ENCODER_cmToSteps(float cm);
 
 #endif

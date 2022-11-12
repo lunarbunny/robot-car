@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "pico/stdlib.h"
 
 #include "encoder.h"
@@ -6,17 +7,74 @@
 #define GPIO_PIN_ENC_LEFT 2
 #define GPIO_PIN_ENC_RIGHT 3
 
-volatile int encIndex = 0;
-int leftRotation[4];
-int rightRotation[4];
+#define ENCODER_DISC_SLOTS 20
+#define WHEEL_DIAMETER_CM 6.7                             // Centimeter
+#define WHEEL_CIRCUMFERENCE_CM (M_PI * WHEEL_DIAMETER_CM) // Centimeter
 
-void IRQHandlerEncoder(uint gpio, uint32_t events);
-bool WheelSpeedTimerCallback(struct repeating_timer *timer);
+const float CM_PER_SLOT = WHEEL_CIRCUMFERENCE_CM / ENCODER_DISC_SLOTS;
 
 struct repeating_timer timer;
 
-volatile int leftEncoderISR =0;
-volatile int rightEncoderISR =0;
+// Wheel speed calculation
+volatile int encIndex = 0;
+volatile int leftRotation[4];
+volatile int rightRotation[4];
+
+// Encoder interrupt counting (used during precise distance movement and angle spot turns)
+volatile int enableISRCounter = 0;
+volatile int encoderISRLeftTargetReached = 0;
+volatile int encoderISRRightTargetReached = 0;
+volatile uint encoderISRTarget = 0;
+volatile uint encoderISRLeftCounter = 0;
+volatile uint encoderISRRightCounter = 0;
+
+void ISR_encoder(uint gpio, uint32_t events)
+{
+    if (gpio == GPIO_PIN_ENC_LEFT)
+    {
+        leftRotation[encIndex]++;
+        if (enableISRCounter && !encoderISRLeftTargetReached)
+        {
+            encoderISRLeftCounter++;
+
+            if (encoderISRLeftCounter == encoderISRTarget)
+                encoderISRLeftTargetReached = 1;
+        }
+        // printf("L encoder interrupt \n");
+    }
+
+    if (gpio == GPIO_PIN_ENC_RIGHT)
+    {
+        rightRotation[encIndex]++;
+        if (enableISRCounter && !encoderISRRightTargetReached)
+        {
+            encoderISRRightCounter++;
+
+            if (encoderISRRightCounter == encoderISRTarget)
+                encoderISRRightTargetReached = 1;
+        }
+        // printf("R encoder interrupt \n");
+    }
+}
+
+bool TIMER_callback(struct repeating_timer *timer)
+{
+    /*
+    ===== How the speed calculation works =====
+    1. Both encoder has its own int[4] buffer
+    2. A timer is setup to trigger this callback every 0.25s
+    3. Stores the amount of interrupts since the last callback
+    4. The buffer is filled sequentially with index incremented each time, wrapping back to 0 at max index
+    5. The speed is calculated by summing up values in the buffer (average interrupts/second for the last second)
+    */
+    leftRotation[(encIndex + 1) % 4] = 0;
+    rightRotation[(encIndex + 1) % 4] = 0;
+    encIndex++;
+    if (encIndex == 4)
+        encIndex = 0;
+    // printf("0.25s timer up \n");
+    return true;
+}
 
 void ENCODER_init(void)
 {
@@ -26,11 +84,11 @@ void ENCODER_init(void)
     // Create a repeating timer that calls repeating_timer_callback.
     // If the delay is > 0 then this is the delay between the previous callback ending and the next starting.
     // If the delay is negative then the next call to the callback will be exactly 500ms after the start of the call to the last callback
-    add_repeating_timer_ms(-250, &WheelSpeedTimerCallback, NULL, &timer);
+    add_repeating_timer_ms(-250, &TIMER_callback, NULL, &timer);
 
     // Setup interrupt, trigger during high to low transition
-    gpio_set_irq_enabled_with_callback(GPIO_PIN_ENC_LEFT, GPIO_IRQ_EDGE_FALL, true, &IRQHandlerEncoder);
-    gpio_set_irq_enabled_with_callback(GPIO_PIN_ENC_RIGHT, GPIO_IRQ_EDGE_FALL, true, &IRQHandlerEncoder);
+    gpio_set_irq_enabled_with_callback(GPIO_PIN_ENC_LEFT, GPIO_IRQ_EDGE_FALL, true, &ISR_encoder);
+    gpio_set_irq_enabled_with_callback(GPIO_PIN_ENC_RIGHT, GPIO_IRQ_EDGE_FALL, true, &ISR_encoder);
 
     printf("[Encoder] Init done \n");
 }
@@ -43,7 +101,7 @@ float ENCODER_getLeftWheelSpeed(void)
     {
         total += leftRotation[i];
     }
-    return total / 4;
+    return total;
 }
 
 float ENCODER_getRightWheelSpeed(void)
@@ -54,50 +112,26 @@ float ENCODER_getRightWheelSpeed(void)
     {
         total += rightRotation[i];
     }
-    return total / 4;
+    return total;
 }
 
-void IRQHandlerEncoder(uint gpio, uint32_t events)
+void ENCODER_waitForISRInterrupts(uint target)
 {
-    if (gpio == GPIO_PIN_ENC_LEFT)
-    {
-        leftRotation[encIndex]++;
-        //printf("L encoder interrupt \n");
-        leftEncoderISR++;
-    }
+    // Reset and enable ISR counter
+    encoderISRLeftCounter = encoderISRRightCounter = 0;
+    encoderISRLeftTargetReached = encoderISRRightTargetReached = 0;
+    encoderISRTarget = target;
+    enableISRCounter = 1;
 
-    if (gpio == GPIO_PIN_ENC_RIGHT)
-    {
-        rightRotation[encIndex]++;
-        //printf("R encoder interrupt \n");
-        rightEncoderISR++;
-    }
+    // Block until interrupt count reaches target
+    while (!encoderISRLeftTargetReached || !encoderISRRightTargetReached)
+        sleep_ms(10);
+
+    enableISRCounter = 0;
 }
 
-bool WheelSpeedTimerCallback(struct repeating_timer *timer)
+// Convert from centimeters to steps
+int ENCODER_cmToSteps(float cm)
 {
-    leftRotation[(encIndex + 1) % 4] = 0;
-    rightRotation[(encIndex + 1) % 4] = 0;
-    encIndex++;
-    if (encIndex == 4)
-        encIndex = 0;
-    //printf("0.25s timer up \n");
-    return true;
-}
-
-int getLeftISRCount()
-{
-    return leftEncoderISR;
-}
-
-
-int getRightISRCount()
-{
-    return rightEncoderISR;
-}
-
-void resetEncoderISRCount()
-{
-   leftEncoderISR = 0;  //  reset counter to zero
-   rightEncoderISR = 0;  //  reset counter to zero
+    return (int)(cm / CM_PER_SLOT); // Convert to an integer (note this is NOT rounded)
 }

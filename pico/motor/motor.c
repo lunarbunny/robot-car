@@ -31,9 +31,6 @@ uint8_t motorSpeedRight = 0;
 int motorDirLeft = -1;
 int motorDirRight = -1;
 
-const int slotCount = 20;          // 20 Slots in disk
-const float wheelDiameter = 66.1f; // Wheel diameter in millimeters
-
 void MOTOR_init(void)
 {
     printf("[Motor] Init start \n");
@@ -54,7 +51,7 @@ void MOTOR_init(void)
     pwm_slice = pwm_gpio_to_slice_num(GPIO_PIN_PWM_EN1);
     // assert(pwm_slice == pwm_gpio_to_slice_num(GPIO_PIN_PWM_EN2));
     pwm_config c = pwm_get_default_config();
-    pwm_config_set_clkdiv_int(&c, 5);       // SYSCLK is 125 MHz, PWM freq is (clk_sys / div)
+    pwm_config_set_clkdiv_int(&c, 5);       // clk_sys defaults at 125 MHz, PWM freq is (clk_sys / div)
     pwm_config_set_wrap(&c, PWM_CYCLE - 1); // Set period of PWM_CYCLE cycles (0 to PWM_CYCLE-1)
 
     // Set default state of motor
@@ -73,15 +70,15 @@ void MOTOR_setSpeed(uint8_t dutyCycle, int motor)
     else if (dutyCycle > 100)
         dutyCycle = 100;
     // Convert to its appropriate PWM level from percentage
-    uint16_t speed = dutyCycle / 100.f * PWM_CYCLE;
+    uint16_t level = dutyCycle / 100.f * PWM_CYCLE;
     if (motor & MOTOR_LEFT)
     {
-        pwm_set_chan_level(pwm_slice, PWM_CHAN_A, speed);
+        pwm_set_chan_level(pwm_slice, PWM_CHAN_A, level);
         motorSpeedLeft = dutyCycle;
     }
     if (motor & MOTOR_RIGHT)
     {
-        pwm_set_chan_level(pwm_slice, PWM_CHAN_B, speed);
+        pwm_set_chan_level(pwm_slice, PWM_CHAN_B, level);
         motorSpeedRight = dutyCycle;
     }
 }
@@ -171,19 +168,6 @@ void MOTOR_setRightTurnMode(void)
     MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_RIGHT);
 }
 
-// Convert from centimeters to steps
-int CMtoSteps(float cm)
-{
-    int result;                                        // Final calculation result
-    float circumference = (wheelDiameter * 3.14) / 10; // Calculate wheel circumference in cm
-    float cm_step = circumference / slotCount;         // CM per Step
-
-    float f_result = cm / cm_step; // Calculate result as a float
-    result = (int)f_result;        // Convert to an integer (note this is NOT rounded)
-
-    return result; // End and return result
-}
-
 void MOTOR_spotTurn(int turnDirection, int angle)
 {
     if (angle < MIN_TURN_ANGLE)
@@ -206,56 +190,28 @@ void MOTOR_spotTurn(int turnDirection, int angle)
     }
 
     int interrupts = 4 * angle / MIN_TURN_ANGLE;
-    int mSpeed = 80;
+    int speed = 80;
 
     if (turnDirection == MOTOR_TURN_CLOCKWISE)
         MOTOR_setRightTurnMode();
     else if (turnDirection == MOTOR_TURN_ANTICLOCKWISE)
         MOTOR_setLeftTurnMode();
 
-    resetEncoderISRCount();
-    MOTOR_setSpeed(mSpeed, MOTOR_LEFT | MOTOR_RIGHT);
-
-    // Wait until turn is done
-    while (interrupts > getLeftISRCount() || interrupts > getRightISRCount())
-    {
-        sleep_ms(50);
-    }
+    MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
+    ENCODER_waitForISRInterrupts(interrupts); // Wait until turn is done
     MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);
 }
 
-void MOTOR_moveFoward(int interrupts)
+void MOTOR_moveFoward(int cm)
 {
-    int mSpeed = 80;
+    int interrupts = ENCODER_cmToSteps(cm);
+    int speed = 80;
 
-    resetEncoderISRCount();
-
-    // Set Left Motor Foward
-    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT);
-    // Set Right Motor Foward
-    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_RIGHT);
+    // Set Motor Foward
+    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
 
     // Go forward until step value is reached
-    while (interrupts > getLeftISRCount() && interrupts > getRightISRCount())
-    {
-
-        if (interrupts > getLeftISRCount())
-        {
-            MOTOR_setSpeed(mSpeed, MOTOR_LEFT);
-        }
-        else
-        {
-            MOTOR_setSpeed(0.f, MOTOR_LEFT);
-        }
-        if (interrupts > getRightISRCount())
-        {
-            MOTOR_setSpeed(mSpeed, MOTOR_RIGHT);
-        }
-        else
-        {
-            MOTOR_setSpeed(0.f, MOTOR_RIGHT);
-        }
-    }
-
-    MOTOR_setSpeed(0.f, MOTOR_LEFT | MOTOR_RIGHT); // Stop when done
+    MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
+    ENCODER_waitForISRInterrupts(interrupts); // Wait until turn is done
+    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);     // Stop when done
 }

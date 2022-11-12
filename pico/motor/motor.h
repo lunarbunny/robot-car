@@ -20,7 +20,7 @@ void MOTOR_setDirection(int dir, int motor);
 int MOTOR_getDirection(int motor);
 
 void MOTOR_spotTurn(int turnDirection, int angle);
-void MOTOR_moveFoward(int interrupts);
+void MOTOR_moveFoward(int cm);
 
 int CMtoSteps(float cm);
 #endif
