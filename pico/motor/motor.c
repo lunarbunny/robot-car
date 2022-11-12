@@ -19,17 +19,19 @@ IN3 IN4, EN2 -> Left Motor
 #define GPIO_PIN_MOTOR_IN3 8
 #define GPIO_PIN_MOTOR_IN4 9
 
-#define PWM_CYCLE 10
+#define PWM_CYCLE 254
+
+#define MIN_TURN_ANGLE 45
 
 uint pwm_slice;
 
-float motorSpeedLeft = 0.f;
-float motorSpeedRight = 0.f;
+uint8_t motorSpeedLeft = 0;
+uint8_t motorSpeedRight = 0;
 
 int motorDirLeft = -1;
 int motorDirRight = -1;
 
-const int slotCount = 20;     // 20 Slots in disk
+const int slotCount = 20;          // 20 Slots in disk
 const float wheelDiameter = 66.1f; // Wheel diameter in millimeters
 
 void MOTOR_init(void)
@@ -46,55 +48,50 @@ void MOTOR_init(void)
     gpio_set_dir(GPIO_PIN_MOTOR_IN3, GPIO_OUT);
     gpio_set_dir(GPIO_PIN_MOTOR_IN4, GPIO_OUT);
 
-    // Setup PWM pins
+    // Initialize PWM
     gpio_set_function(GPIO_PIN_PWM_EN1, GPIO_FUNC_PWM);
     gpio_set_function(GPIO_PIN_PWM_EN2, GPIO_FUNC_PWM);
     pwm_slice = pwm_gpio_to_slice_num(GPIO_PIN_PWM_EN1);
-    pwm_set_wrap(pwm_slice, PWM_CYCLE - 1); // Set period of PWM_CYCLE cycles (0 to PWM_CYCLE-1)
+    // assert(pwm_slice == pwm_gpio_to_slice_num(GPIO_PIN_PWM_EN2));
+    pwm_config c = pwm_get_default_config();
+    pwm_config_set_clkdiv_int(&c, 5);       // SYSCLK is 125 MHz, PWM freq is (clk_sys / div)
+    pwm_config_set_wrap(&c, PWM_CYCLE - 1); // Set period of PWM_CYCLE cycles (0 to PWM_CYCLE-1)
 
     // Set default state of motor
     MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);
     MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
 
-    pwm_set_enabled(pwm_slice, true);
+    pwm_init(pwm_slice, &c, true);
 
     printf("[Motor] Init done \n");
 }
 
-void MOTOR_setSpeed(uint16_t dutyCycle, int motor)
+void MOTOR_setSpeed(uint8_t dutyCycle, int motor)
 {
     if (dutyCycle < 0)
         dutyCycle = 0;
     else if (dutyCycle > 100)
         dutyCycle = 100;
-    // Set the duty cycle in percentage
+    // Convert to its appropriate PWM level from percentage
+    uint16_t speed = dutyCycle / 100.f * PWM_CYCLE;
     if (motor & MOTOR_LEFT)
     {
-        pwm_set_chan_level(pwm_slice, PWM_CHAN_A, dutyCycle / PWM_CYCLE);
+        pwm_set_chan_level(pwm_slice, PWM_CHAN_A, speed);
         motorSpeedLeft = dutyCycle;
     }
     if (motor & MOTOR_RIGHT)
     {
-        pwm_set_chan_level(pwm_slice, PWM_CHAN_B, dutyCycle / PWM_CYCLE);
+        pwm_set_chan_level(pwm_slice, PWM_CHAN_B, speed);
         motorSpeedRight = dutyCycle;
     }
 }
 
 void MOTOR_stop(int motor)
 {
-    if (motor & MOTOR_LEFT)
-    {
-        pwm_set_chan_level(pwm_slice, PWM_CHAN_A, 0);
-        motorSpeedLeft = 0.f;
-    }
-    if (motor & MOTOR_RIGHT)
-    {
-        pwm_set_chan_level(pwm_slice, PWM_CHAN_B, 0);
-        motorSpeedRight = 0.f;
-    }
+    MOTOR_setSpeed(0, motor);
 }
 
-uint16_t MOTOR_getSpeed(int motor)
+uint8_t MOTOR_getSpeed(int motor)
 {
     // Return the duty cycle in percentage
     if (motor & MOTOR_LEFT)
@@ -189,8 +186,27 @@ int CMtoSteps(float cm)
 
 void MOTOR_spotTurn(int turnDirection, int angle)
 {
-    int interrupts = 4 * angle / 45;
-    int mSpeed = 60;
+    if (angle < MIN_TURN_ANGLE)
+        angle = MIN_TURN_ANGLE;
+
+    // Ensure angle is a multiple of MIN_TURN_ANGLE
+    int angleError = angle % MIN_TURN_ANGLE;
+    if (angleError > 0)
+    {
+        if (angleError > MIN_TURN_ANGLE / 2)
+        {
+            // Closer to next multiple of MIN_TURN_ANGLE, round up
+            angle += MIN_TURN_ANGLE - angleError;
+        }
+        else
+        {
+            // Closer to last multiple of MIN_TURN_ANGLE, round down
+            angle -= angleError;
+        }
+    }
+
+    int interrupts = 4 * angle / MIN_TURN_ANGLE;
+    int mSpeed = 80;
 
     if (turnDirection == MOTOR_TURN_CLOCKWISE)
         MOTOR_setRightTurnMode();
@@ -201,7 +217,10 @@ void MOTOR_spotTurn(int turnDirection, int angle)
     MOTOR_setSpeed(mSpeed, MOTOR_LEFT | MOTOR_RIGHT);
 
     // Wait until turn is done
-    while (getLeftISRCount() < interrupts || getRightISRCount() < interrupts);
+    while (interrupts > getLeftISRCount() || interrupts > getRightISRCount())
+    {
+        sleep_ms(50);
+    }
     MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);
 }
 
