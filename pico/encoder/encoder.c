@@ -7,6 +7,8 @@
 #define GPIO_PIN_ENC_LEFT 2
 #define GPIO_PIN_ENC_RIGHT 3
 
+#define INTERRUPT_BUF_SIZE 4
+
 #define ENCODER_DISC_SLOTS 20
 #define WHEEL_DIAMETER_CM 6.7                             // Centimeter
 #define WHEEL_CIRCUMFERENCE_CM (M_PI * WHEEL_DIAMETER_CM) // Centimeter
@@ -17,8 +19,8 @@ struct repeating_timer timer;
 
 // Wheel speed calculation
 volatile int encIndex = 0;
-volatile int leftRotation[4];
-volatile int rightRotation[4];
+volatile int leftInterruptBuffer[INTERRUPT_BUF_SIZE];
+volatile int rightInterruptBuffer[INTERRUPT_BUF_SIZE];
 
 // Encoder interrupt counting (used during precise distance movement and angle spot turns)
 volatile int enableISRCounter = 0;
@@ -32,7 +34,7 @@ void ISR_encoder(uint gpio, uint32_t events)
 {
     if (gpio == GPIO_PIN_ENC_LEFT)
     {
-        leftRotation[encIndex]++;
+        leftInterruptBuffer[encIndex]++;
         if (enableISRCounter && !encoderISRLeftTargetReached)
         {
             encoderISRLeftCounter++;
@@ -45,7 +47,7 @@ void ISR_encoder(uint gpio, uint32_t events)
 
     if (gpio == GPIO_PIN_ENC_RIGHT)
     {
-        rightRotation[encIndex]++;
+        rightInterruptBuffer[encIndex]++;
         if (enableISRCounter && !encoderISRRightTargetReached)
         {
             encoderISRRightCounter++;
@@ -67,10 +69,10 @@ bool TIMER_callback(struct repeating_timer *timer)
     4. The buffer is filled sequentially with index incremented each time, wrapping back to 0 at max index
     5. The speed is calculated by summing up values in the buffer (average interrupts/second for the last second)
     */
-    leftRotation[(encIndex + 1) % 4] = 0;
-    rightRotation[(encIndex + 1) % 4] = 0;
+    leftInterruptBuffer[(encIndex + 1) % INTERRUPT_BUF_SIZE] = 0;
+    rightInterruptBuffer[(encIndex + 1) % INTERRUPT_BUF_SIZE] = 0;
     encIndex++;
-    if (encIndex == 4)
+    if (encIndex == INTERRUPT_BUF_SIZE)
         encIndex = 0;
     // printf("0.25s timer up \n");
     return true;
@@ -83,7 +85,7 @@ void ENCODER_init(void)
     // Setup timer (0.25 second), used to calculate wheel speed
     // Create a repeating timer that calls repeating_timer_callback.
     // If the delay is > 0 then this is the delay between the previous callback ending and the next starting.
-    // If the delay is negative then the next call to the callback will be exactly 500ms after the start of the call to the last callback
+    // If the delay is negative then the next call to the callback will be exactly delay ms after the start of the call to the last callback
     add_repeating_timer_ms(-250, &TIMER_callback, NULL, &timer);
 
     // Setup interrupt, trigger during high to low transition
@@ -93,24 +95,26 @@ void ENCODER_init(void)
     printf("[Encoder] Init done \n");
 }
 
-float ENCODER_getLeftWheelSpeed(void)
+// Returns wheel speed in centimeter/sec
+float ENCODER_getWheelSpeed(int encoder)
 {
-    int total = 0;
-    int i;
-    for (i = 0; i < 4; i++)
-    {
-        total += leftRotation[i];
-    }
-    return total;
+    int interruptsPerSec = ENCODER_getWheelInterruptSpeed(encoder);
+    return interruptsPerSec * CM_PER_SLOT;
 }
 
-float ENCODER_getRightWheelSpeed(void)
+// Returns wheel speed in interrupts/sec
+int ENCODER_getWheelInterruptSpeed(int encoder)
 {
     int total = 0;
-    int i;
-    for (i = 0; i < 4; i++)
+    if (encoder & ENCODER_LEFT)
     {
-        total += rightRotation[i];
+        for (int i = 0; i < INTERRUPT_BUF_SIZE; i++)
+            total += leftInterruptBuffer[i];
+    }
+    else if (encoder & ENCODER_RIGHT)
+    {
+        for (int i = 0; i < INTERRUPT_BUF_SIZE; i++)
+            total += rightInterruptBuffer[i];
     }
     return total;
 }

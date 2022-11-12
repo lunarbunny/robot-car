@@ -1,13 +1,17 @@
 #include <stdio.h>
 
 #include "pico/stdlib.h"
+#include "pico/util/datetime.h"
 #include "motor/motor.h"
 #include "motor/pid.h"
 #include "encoder/encoder.h"
-
 #include "hardware/clocks.h"
 
 #define DEBUG
+
+#define PID_Kp 5.0f
+#define PID_Ki 1.0f
+#define PID_Kd 0.05f
 
 void show_clock_freqs(void)
 {
@@ -29,7 +33,8 @@ void show_clock_freqs(void)
            f_pll_sys, f_pll_usb, f_rosc, f_clk_sys, f_clk_peri, f_clk_usb, f_clk_adc);
 }
 
-void togglePid(uint8_t* flag) {
+void togglePid(uint8_t *flag)
+{
     *flag ^= 1;
     printf("> [PID] Enabled: %i \n", *flag);
 }
@@ -50,11 +55,16 @@ int main()
     ENCODER_init();
 
     // Create PID contoller for motors
-    PID *leftMotorPID = PID_create(5.0f, 5.f, 0.5f, 0, 0, 100);
-    PID *rightMotorPID = PID_create(5.0f, 5.f, 0.5f, 0, 0, 100);
+    PID *leftMotorPID = PID_create(PID_Kp, PID_Ki, PID_Kd, 0, 0, 100);
+    PID *rightMotorPID = PID_create(PID_Kp, PID_Ki, PID_Kd, 0, 0, 100);
+
+    absolute_time_t currentTime, previousTime;
 
     float leftWheelSpeed, rightWheelSpeed;
-    int leftMotorDutyCycle, rightMotorDutyCycle;
+    int leftWheelInterruptSpeed, rightWheelInterruptSpeed;
+    uint leftMotorDutyCycle, rightMotorDutyCycle;
+
+    float deltaTime; // Time since last loop in seconds
 
     uint8_t usePid = 1;
 
@@ -68,32 +78,63 @@ int main()
             togglePid(&usePid);
             break;
         case 'q': // Slow down (through PID)
-            leftMotorPID->setPoint -= 2;
-            if (leftMotorPID->setPoint < 0.f)
-                leftMotorPID->setPoint = 0.f;
-            rightMotorPID->setPoint -= 2;
-            if (rightMotorPID->setPoint < 0.f)
-                rightMotorPID->setPoint = 0.f;
-            printf("> [Motor] PID Target Speed %f \n", leftMotorPID->setPoint * 10);
+            PID_setTargetSpeed(leftMotorPID, SPEED_MEDIUM);
+            PID_setTargetSpeed(rightMotorPID, SPEED_MEDIUM);
+            printf("> [Motor] PID Target Setpoint %.0f \n", leftMotorPID->setPoint);
             break;
         case 'e': // Speed up (through PID)
-            leftMotorPID->setPoint += 2;
-            if (leftMotorPID->setPoint > 10.f)
-                leftMotorPID->setPoint = 10.f;
-            rightMotorPID->setPoint += 2;
-            if (rightMotorPID->setPoint > 10.f)
-                rightMotorPID->setPoint = 10.f;
-            printf("> [Motor] PID Target Speed %.0f \n", leftMotorPID->setPoint * 10);
+            PID_setTargetSpeed(leftMotorPID, SPEED_HIGH);
+            PID_setTargetSpeed(rightMotorPID, SPEED_HIGH);
+            printf("> [Motor] PID Target Setpoint %.0f \n", leftMotorPID->setPoint);
             break;
-        case 'Q': // Slow down (direct motor control, need to disable PID!)
-            if (usePid) togglePid(&usePid);
-            MOTOR_setSpeed(MOTOR_getSpeed(MOTOR_LEFT) - 20, MOTOR_LEFT | MOTOR_RIGHT);
-            printf("> [Motor] Set Speed %u \n", MOTOR_getSpeed(MOTOR_LEFT));
+        case '`': // Stop
+            if (usePid)
+            {
+                PID_setTargetSpeed(leftMotorPID, SPEED_NONE);
+                PID_setTargetSpeed(rightMotorPID, SPEED_NONE);
+                printf("> [Motor] PID Target Setpoint %.0f \n", leftMotorPID->setPoint);
+            }
+            else
+            {
+                MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);
+            }
             break;
-        case 'E': // Speed up (direct motor control, need to disable PID!)
-            if (usePid) togglePid(&usePid);
-            MOTOR_setSpeed(MOTOR_getSpeed(MOTOR_LEFT) + 20, MOTOR_LEFT | MOTOR_RIGHT);
-            printf("> [Motor] Set Speed %u \n", MOTOR_getSpeed(MOTOR_LEFT));
+        case '1': // 60% Duty cycle
+            if (usePid)
+                togglePid(&usePid);
+            MOTOR_setSpeed(60, MOTOR_LEFT | MOTOR_RIGHT);
+            break;
+        case '2': // 70% Duty cycle
+            if (usePid)
+                togglePid(&usePid);
+            MOTOR_setSpeed(70, MOTOR_LEFT | MOTOR_RIGHT);
+            break;
+        case '3': // 80% Duty cycle
+            if (usePid)
+                togglePid(&usePid);
+            MOTOR_setSpeed(80, MOTOR_LEFT | MOTOR_RIGHT);
+            break;
+        case '4': // 90% Duty cycle
+            if (usePid)
+                togglePid(&usePid);
+            MOTOR_setSpeed(90, MOTOR_LEFT | MOTOR_RIGHT);
+            break;
+        case '5': // 100% Duty cycle
+            if (usePid)
+                togglePid(&usePid);
+            MOTOR_setSpeed(100, MOTOR_LEFT | MOTOR_RIGHT);
+            break;
+        case 'Q': // Slow down (direct motor control)
+            if (usePid)
+                togglePid(&usePid);
+            uint8_t prevSpeed = MOTOR_getSpeed(MOTOR_LEFT) - 10;
+            MOTOR_setSpeed(prevSpeed, MOTOR_LEFT | MOTOR_RIGHT);
+            break;
+        case 'E': // Speed up (direct motor control)
+            if (usePid)
+                togglePid(&usePid);
+            uint8_t nextSpeed = MOTOR_getSpeed(MOTOR_LEFT) + 10;
+            MOTOR_setSpeed(nextSpeed, MOTOR_LEFT | MOTOR_RIGHT);
             break;
         case 'w': // Forward
             MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
@@ -111,12 +152,16 @@ int main()
             MOTOR_spotTurn(MOTOR_TURN_CLOCKWISE, 90);
             printf("> [Motor] Right Turn \n");
             break;
+        case 'A': // Turn 180 (in place)
+            MOTOR_spotTurn(MOTOR_TURN_ANTICLOCKWISE, 180);
+            printf("> [Motor] Turn 180 ANTI-CLK \n");
+            break;
+        case 'D': // Turn 180 (in place)
+            MOTOR_spotTurn(MOTOR_TURN_CLOCKWISE, 180);
+            printf("> [Motor] Turn 180 CLK \n");
+            break;
         case 'x': // Move Foward (10 cm)
             MOTOR_moveFoward(10);
-            printf("> [Motor] Move Foward \n");
-            break;
-        case 't': // Turn Around
-            MOTOR_spotTurn(MOTOR_TURN_CLOCKWISE, 180);
             printf("> [Motor] Move Foward \n");
             break;
         case 'c':
@@ -124,20 +169,41 @@ int main()
             break;
         }
 
+        currentTime = get_absolute_time();
+        deltaTime = absolute_time_diff_us(previousTime, currentTime) / 1000000.f;
+        previousTime = currentTime;
+
+        leftWheelSpeed = ENCODER_getWheelSpeed(ENCODER_LEFT);
+        rightWheelSpeed = ENCODER_getWheelSpeed(ENCODER_RIGHT);
+
         if (usePid)
         {
-            leftWheelSpeed = ENCODER_getLeftWheelSpeed();
-            rightWheelSpeed = ENCODER_getRightWheelSpeed();
+            // leftWheelInterruptSpeed = ENCODER_getWheelInterruptSpeed(ENCODER_LEFT);
+            // rightWheelInterruptSpeed = ENCODER_getWheelInterruptSpeed(ENCODER_RIGHT);
 
-            leftMotorDutyCycle = PID_run(leftMotorPID, leftWheelSpeed);
-            rightMotorDutyCycle = PID_run(rightMotorPID, rightWheelSpeed);
+            leftMotorDutyCycle = PID_run(leftMotorPID, leftWheelSpeed, deltaTime);
+            rightMotorDutyCycle = PID_run(rightMotorPID, rightWheelSpeed, deltaTime);
 
-            MOTOR_setSpeed(leftMotorDutyCycle, MOTOR_LEFT);
-            MOTOR_setSpeed(rightMotorDutyCycle, MOTOR_RIGHT);
+            if (leftMotorDutyCycle != MOTOR_getSpeed(MOTOR_LEFT))
+            {
+                MOTOR_setSpeed(leftMotorDutyCycle, MOTOR_LEFT);
+            }
+            if (rightMotorDutyCycle != MOTOR_getSpeed(MOTOR_RIGHT))
+            {
+                MOTOR_setSpeed(rightMotorDutyCycle, MOTOR_RIGHT);
+            }
 
 #ifdef DEBUG
-            printf("SPD L: %.2f PID L: %i | [P]%.2f [I]%.2f [D]%.2f \r\n", leftWheelSpeed, leftMotorDutyCycle, leftMotorPID->p, leftMotorPID->i, leftMotorPID->d);
-            printf("SPD R: %.2f PID R: %i | [P]%.2f [I]%.2f [D]%.2f \r\n", rightWheelSpeed, rightMotorDutyCycle, rightMotorPID->p, rightMotorPID->i, rightMotorPID->d);
+            // printf("PID Delta Time: %.6f (s) \n", deltaTime);
+            printf("SPD L: %.2f | DUTY L: %i | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", leftWheelSpeed, leftMotorDutyCycle, leftMotorPID->p, leftMotorPID->i, leftMotorPID->d, leftMotorPID->lastError);
+            printf("SPD R: %.2f | DUTY R: %i | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", rightWheelSpeed, rightMotorDutyCycle, rightMotorPID->p, rightMotorPID->i, rightMotorPID->d, rightMotorPID->lastError);
+#endif
+        }
+        else
+        {
+#ifdef DEBUG
+            printf("SPD L: %.2f | DUTY L: %i \n", leftWheelSpeed, MOTOR_getSpeed(MOTOR_LEFT));
+            printf("SPD R: %.2f | DUTY R: %i \n", rightWheelSpeed, MOTOR_getSpeed(MOTOR_RIGHT));
 #endif
         }
 

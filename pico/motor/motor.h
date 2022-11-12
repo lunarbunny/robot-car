@@ -12,9 +12,9 @@
 
 void MOTOR_init(void);
 
-void MOTOR_setSpeed(uint8_t dutyCycle, int motor);
+void MOTOR_setSpeed(uint dutyCycle, int motor);
 void MOTOR_stop(int motor);
-uint8_t MOTOR_getSpeed(int motor);
+uint MOTOR_getSpeed(int motor);
 
 void MOTOR_setDirection(int dir, int motor);
 int MOTOR_getDirection(int motor);

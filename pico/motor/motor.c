@@ -63,7 +63,7 @@ void MOTOR_init(void)
     printf("[Motor] Init done \n");
 }
 
-void MOTOR_setSpeed(uint8_t dutyCycle, int motor)
+void MOTOR_setSpeed(uint dutyCycle, int motor)
 {
     if (dutyCycle < 0)
         dutyCycle = 0;
@@ -81,6 +81,8 @@ void MOTOR_setSpeed(uint8_t dutyCycle, int motor)
         pwm_set_chan_level(pwm_slice, PWM_CHAN_B, level);
         motorSpeedRight = dutyCycle;
     }
+
+    // printf("> [MOTOR] Set Speed %u \n", dutyCycle);
 }
 
 void MOTOR_stop(int motor)
@@ -88,7 +90,7 @@ void MOTOR_stop(int motor)
     MOTOR_setSpeed(0, motor);
 }
 
-uint8_t MOTOR_getSpeed(int motor)
+uint MOTOR_getSpeed(int motor)
 {
     // Return the duty cycle in percentage
     if (motor & MOTOR_LEFT)

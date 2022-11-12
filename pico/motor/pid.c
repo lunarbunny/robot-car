@@ -4,9 +4,11 @@
 
 #include "pid.h"
 
-PID* PID_create(float kP, float kI, float kD, float setPoint, float min, float max) {
-    PID* newPID = malloc(sizeof(PID));
-    if (newPID != NULL) {
+PID *PID_create(float kP, float kI, float kD, float setPoint, float min, float max)
+{
+    PID *newPID = malloc(sizeof(PID));
+    if (newPID != NULL)
+    {
         newPID->kP = kP; // Proportional
         newPID->kI = kI; // Integral
         newPID->kD = kD; // Deriative
@@ -18,49 +20,79 @@ PID* PID_create(float kP, float kI, float kD, float setPoint, float min, float m
     return newPID;
 }
 
-int PID_run(PID* pid, float input) {
+int clamp(int input, int min, int max)
+{
+    if (input > max)
+        return max;
+    if (input < min)
+        return min;
+    return input;
+}
+
+float clampF(float input, float min, float max)
+{
+    if (input > max)
+        return max;
+    if (input < min)
+        return min;
+    return input;
+}
+
+uint normalize(uint input)
+{
+    // Motors only have enough torque to start moving at ~80% duty cycle
+    // So we normalize the speed so that the original PID output of 0-100% is
+    // transformed into 80%-100% to fit expected real life speeds.
+    if (input > 0)
+    {
+        float step = (100 - 80) / 100.f;
+        return 80 + roundf(input * step);
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void PID_setTarget(PID *pid, float setPoint)
+{
+    pid->setPoint = clamp(setPoint, 0.f, 25.f);
+}
+
+void PID_setTargetSpeed(PID *pid, int speed)
+{
+    switch (speed)
+    {
+    case SPEED_NONE:
+        PID_setTarget(pid, 0.f);
+        break;
+    case SPEED_LOW:
+        PID_setTarget(pid, 12.f);
+        break;
+    case SPEED_MEDIUM:
+        PID_setTarget(pid, 18.f);
+        break;
+    case SPEED_HIGH:
+        PID_setTarget(pid, 25.f);
+        break;
+    }
+}
+
+uint PID_run(PID *pid, float input, float deltaTime)
+{
     float error = pid->setPoint - input;
 
     pid->p = pid->kP * error;
 
-    // Check if saturating and if sign bit of integral and error is the same.
-    // If saturating it means the output is higher than specified limit of actuator.
-    // If sign bits are the same, it means the integral is causing oversaturation and making it worse.
-    // char antiWindupCheck = pid->saturating && (signbit(error) == signbit(pid->integral));
-    // if (!antiWindupCheck) {
-    //     pid->integral += pid->kI * error;
-    //     output = proportional + pid->integral;
-    // } else {
-    //     // If saturating and integral causing more saturation, ignore integral
-    //     output = proportional;
-    // }
+    pid->i += pid->kI * error * deltaTime;
+    pid->i = clampF(pid->i, -pid->min, pid->max);
 
-    pid->i += pid->kI * error;
+    pid->d = pid->kD * (error - pid->lastError) / deltaTime;
 
-    if (pid->i > pid->max) pid->i = pid->max;
-    else if (pid->i < pid->min) pid->i = pid->min;
-
-    pid->d = pid->kD * (input - pid->lastInput);
-
-    if (error < 0.01f)
-        pid->i = 0;
-
-    int output = round(pid->p + pid->i - pid->d);
-
-    // Saturation check (output too low/high)
-    if (output > pid->max) {
-        output = pid->max;
-        pid->saturating = 1;
-    } else if (output < pid->min) {
-        output = pid->min;
-        pid->saturating = 1;
-    } else {
-        pid->saturating = 0;
-    }
+    uint output = pid->p + pid->i + pid->d;
+    output = clamp(output, pid->min, pid->max);
 
     pid->lastError = error;
-    pid->lastInput = input;
 
-    return output;
+    return normalize(output);
 }
-
