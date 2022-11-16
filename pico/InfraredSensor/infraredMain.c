@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 // Pico libraries
 #include "pico/types.h" // Timers
 #include "pico/stdlib.h"
@@ -28,15 +29,19 @@ int main () {
     int arrayVar = 0;           // Used in main loop to check 1 char scanned // To-do: Make it dynamic 
     int charStartEndCheck[9];  // Used in checking for * symbol
     int timeChanges[9];         // Stores the differences in timings
-    int charASCII[8];
 
-    // Char maps
-    int varcharStartEndStar[9];
+    // Character Logic Variables
+    bool startReading = false;
+    int varcharStartEndStar[9]; // Used for only comparing * (starting/ ending characters)
+    int arrayVarASCII = 0;      // Used in varcharStartEndStar = * loop to reset varCharASCII 
+    int countStar = 0;
+    char varCharASCII = '~'; // Used for storing main data character
+    char finalString[22];   // 1 used for *, 1 to store ending char '/0' if not buffer overflow; 20 char storage
 
+    // CODE39 Char Arrays. 1 is LONG bar. 0 is SHORT.
     int charStartEndStar[9] = {0, 1, 0, 0, 1, 0, 1, 0, 0};
     int charSpace[9] = {0, 1, 1, 0, 0, 0, 1, 0, 0};
     int letterA[9] = {1, 0, 0, 0, 0, 1, 0, 0, 1};
-
     int letterB[9] = {0, 0, 1, 0, 0, 1, 0, 0, 1};
     int letterC[9] = {1, 0, 1, 0, 0, 1, 0, 0, 0};
     int letterD[9] = {0, 0, 0, 0, 1, 1, 0, 0, 1};
@@ -110,7 +115,7 @@ int main () {
             printf("\n");
             arrayVar = 0; // Reset var to start new char reading 
 
-            /* Find if its long or short, black or white ooO ooA */
+            /* Find if its long or short bars, black or white ooO ooA */
             int h1 = INT32_MIN; //TOP 1st, index of top 1st
             int h2 = INT32_MIN; //TOP 2nd, index of top 2nd
             int h3 = INT32_MIN; //TOP 3rd, index of top 3rd
@@ -158,13 +163,118 @@ int main () {
                 }
             }
 
-            // PRINTING CHARBINARY 
+            // PRINTING CHARACTER READ 
             printf("\n ***** \t READING RESULT: \t *****\n");
 
-            if (compareArray(varcharStartEndStar, charStartEndStar)==0) {printf("* \n");}
+            // LOGIC
+            // if first char = *
+            // {
+            //     clear first char value, clear dataChar, disable fcfs
+                
+            //     loop{
+            //         dataChar = read 0-9 edges
+            //         compare dataChar with character list
+            //         if (dataChar = *) {break;}
+            //     }
+            // }
+
+            // If character = *    
+            if (compareArray(varcharStartEndStar, charStartEndStar)==0) 
+            {
+                countStar ++;
+                startReading = true;
+                while (startReading)
+                {
+                    if (compareArray(varcharStartEndStar, letterF)==0) {printf("\n\n 'F' is your data \n\n");}
+                    
+                    // Breaking loop
+                    if (compareArray(varcharStartEndStar, charStartEndStar)==0)
+                    {
+                        printf("\n FAK MAN \n");
+                        break;
+                    }
+                    break;
+                }
+                
+            }
+
+
+            // If first number in data section of array starts with 1 
+            // KRAHOE185MC3U.YW
+            if (varcharStartEndStar[0]){ // Currently using varcharStartEndStar, 
+                if (varcharStartEndStar[8]) 
+                {
+                    // U1AK
+                } 
+                
+                else if (varcharStartEndStar[2])
+                {
+                    // W3CM
+                }
+                else if (varcharStartEndStar[6])
+                {
+                    //.8HR
+                }
+                else 
+                {
+                    // OE5Y
+                }
+            } 
+            // If first number in data section of array starts with 0
+            // QGNTDJ7%40LSBIPF296-+X*/$VZ SPACE
+            else if (!varcharStartEndStar[0]) {
+                // VX-2BL47DNGQ
+                if (varcharStartEndStar[8]) // Ending number 1
+                {
+                    if (varcharStartEndStar[2]) {
+                        //V2BL
+                    }
+                    else if (varcharStartEndStar[6]) {
+                        //-7GQ
+                    }
+                    else {
+                        //X4DN
+                    }
+                    
+                }
+                else // Ending number 0
+                {
+                    // Z$/*+69FPIS0%JT SPACE <0>
+                    if (varcharStartEndStar[1]) 
+                    {
+                        // Z$/+ SPACE
+                        if (varcharStartEndStar[2]) {
+                            // Z SPACE
+                        }
+                        else {
+                            // $/+
+                        } 
+                    }
+                    else if (varcharStartEndStar[2])
+                    {
+                        // 69FPIS
+                        if (varcharStartEndStar[4]){
+                            //6FP
+                        }
+                        else {
+                            //9IS
+                        }
+                    }
+                    else {
+                        // 0%JT
+                    }
+                }
+            }
+
+            // if (compareArray(varcharStartEndStar, charStartEndStar)==0) {printf("* \n");}
             if (compareArray(varcharStartEndStar, letterF)==0) {printf("F \n");}
             if (compareArray(varcharStartEndStar, charSpace)==0) {printf("SPACE \n");} 
             printf(" END READING RESULT: \n");
+
+            // to print without the * at the beginning of the string
+            // char name[6] = "vamsi";
+            // char *result = name+1;
+            // printf("%s\n",result);
         }
 
         
