@@ -3,13 +3,14 @@
 #include "hardware/pwm.h"
 
 #include "motor.h"
+#include "../encoder/encoder.h"
 
-#define GPIO_PIN_MOTOR1_PWM 0
-#define GPIO_PIN_MOTOR2_PWM 1
-#define GPIO_PIN_MOTOR1_IN1 2
-#define GPIO_PIN_MOTOR1_IN2 3
-#define GPIO_PIN_MOTOR2_IN3 4
-#define GPIO_PIN_MOTOR2_IN4 5
+#define GPIO_PIN_MOTOR1_PWM 4
+#define GPIO_PIN_MOTOR2_PWM 5
+#define GPIO_PIN_MOTOR1_IN1 6
+#define GPIO_PIN_MOTOR1_IN2 7
+#define GPIO_PIN_MOTOR2_IN3 8
+#define GPIO_PIN_MOTOR2_IN4 9
 
 #define PWM_CYCLE 10
 
@@ -21,8 +22,13 @@ float motorSpeedRight = 0.f;
 int motorDirLeft = -1;
 int motorDirRight = -1;
 
+const float slotCount = 20.00;  // 20 Slots in disk, change if different
+const float wheelDiameter = 66.10; // Wheel diameter in millimeters, change if different
+
 void MOTOR_init(void)
 {
+    printf("[Motor] Init start \n");
+
     // Initialize GPIO pins
     gpio_init(GPIO_PIN_MOTOR1_IN1);
     gpio_init(GPIO_PIN_MOTOR1_IN2);
@@ -44,29 +50,31 @@ void MOTOR_init(void)
     MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
     MOTOR_setSpeed(0.f, MOTOR_LEFT | MOTOR_RIGHT);
 
-    printf("Motor Init \r\n");
+    printf("[Motor] Init done \n");
 }
 
-void MOTOR_setSpeed(float dutyCycle, int motor) {
+void MOTOR_setSpeed(int8_t dutyCycle, int motor) {
+    if (dutyCycle < 0) dutyCycle = 0;
+    else if (dutyCycle > 100) dutyCycle = 100;
     // Set the duty cycle in percentage
     if (motor & MOTOR_LEFT) {
-        pwm_set_chan_level(pwm_slice, PWM_CHAN_A, dutyCycle / (100.f / PWM_CYCLE));
+        pwm_set_chan_level(pwm_slice, PWM_CHAN_A, dutyCycle / PWM_CYCLE);
         motorSpeedLeft = dutyCycle;
     }
     if (motor & MOTOR_RIGHT) {
-        pwm_set_chan_level(pwm_slice, PWM_CHAN_B, dutyCycle / (100.f / PWM_CYCLE));
+        pwm_set_chan_level(pwm_slice, PWM_CHAN_B, dutyCycle / PWM_CYCLE);
         motorSpeedRight = dutyCycle;
     }
 }
 
-float MOTOR_getSpeed(int motor) {
+uint16_t MOTOR_getSpeed(int motor) {
     // Return the duty cycle in percentage
     if (motor & MOTOR_LEFT) {
         return motorSpeedLeft;
     } else if (motor & MOTOR_RIGHT) {
-        return motorDirRight;
+        return motorSpeedRight;
     } else {
-        return 0.f;
+        return -1;
     }
 }
 
@@ -117,4 +125,157 @@ void MOTOR_turnLeft(void) {
 void MOTOR_turnRight(void) {
     MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT);
     MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_RIGHT);
+}
+
+// Function to convert from centimeters to steps
+int CMtoSteps(float cm) {
+
+  int result;  // Final calculation result
+  float circumference = (wheelDiameter * 3.14) / 10; // Calculate wheel circumference in cm
+  float cm_step = circumference / slotCount;  // CM per Step
+  
+  float f_result = cm / cm_step;  // Calculate result as a float
+  result = (int) f_result; // Convert to an integer (note this is NOT rounded)
+  
+  return result;  // End and return result
+}
+
+void TurnRight() 
+{
+    int interrupts = 10;
+    int mSpeed = 60;
+
+   resetEncoderISRCount();
+
+   // Set Left Motor Backward
+   MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_LEFT);
+   // Set Right Motor Foward
+   MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_RIGHT);
+
+  // Go forward until step value is reached
+  while (interrupts > getLeftISRCount() && interrupts > getRightISRCount()) {
+   
+    if (interrupts > getLeftISRCount()) {
+        MOTOR_setSpeed(mSpeed, MOTOR_LEFT);
+    } 
+	else {
+    	MOTOR_setSpeed(0.f, MOTOR_LEFT);
+    }
+    if (interrupts >  getRightISRCount()) {
+    	MOTOR_setSpeed(mSpeed, MOTOR_RIGHT);
+    } 
+	else {
+   		MOTOR_setSpeed(0.f, MOTOR_RIGHT);
+    }
+   }
+    
+  MOTOR_setSpeed(0.f, MOTOR_LEFT);
+  MOTOR_setSpeed(0.f, MOTOR_RIGHT);  // Stop when done
+  resetEncoderISRCount();
+ 
+}
+
+void TurnLeft() 
+{
+    int interrupts = 10;
+    int mSpeed = 60;
+
+   resetEncoderISRCount();
+
+   // Set Left Motor Foward
+   MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT);
+   // Set Right Motor Backward
+   MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_RIGHT);
+
+  // Go forward until step value is reached
+  while (interrupts > getLeftISRCount() && interrupts > getRightISRCount()) {
+   
+    if (interrupts > getLeftISRCount()) {
+        MOTOR_setSpeed(mSpeed, MOTOR_LEFT);
+    } 
+	else {
+    	MOTOR_setSpeed(0.f, MOTOR_LEFT);
+    }
+    if (interrupts >  getRightISRCount()) {
+    	MOTOR_setSpeed(mSpeed, MOTOR_RIGHT);
+    } 
+	else {
+   		MOTOR_setSpeed(0.f, MOTOR_RIGHT);
+    }
+   }
+    
+  MOTOR_setSpeed(0.f, MOTOR_LEFT);
+  MOTOR_setSpeed(0.f, MOTOR_RIGHT);  // Stop when done
+  resetEncoderISRCount();
+ 
+}
+
+void MoveFoward(int interrupts) 
+{
+ 
+    int mSpeed = 80;
+
+   resetEncoderISRCount();
+
+   // Set Left Motor Foward
+   MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT);
+   // Set Right Motor Foward
+   MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_RIGHT);
+
+  // Go forward until step value is reached
+  while (interrupts > getLeftISRCount() && interrupts > getRightISRCount()) {
+   
+    if (interrupts > getLeftISRCount()) {
+        MOTOR_setSpeed(mSpeed, MOTOR_LEFT);
+    } 
+	else {
+    	MOTOR_setSpeed(0.f, MOTOR_LEFT);
+    }
+    if (interrupts >  getRightISRCount()) {
+    	MOTOR_setSpeed(mSpeed, MOTOR_RIGHT);
+    } 
+	else {
+   		MOTOR_setSpeed(0.f, MOTOR_RIGHT);
+    }
+   }
+    
+  MOTOR_setSpeed(0.f, MOTOR_LEFT);
+  MOTOR_setSpeed(0.f, MOTOR_RIGHT);  // Stop when done
+  resetEncoderISRCount();
+ 
+}
+
+void TurnAround() 
+{
+    int interrupts = 20;
+    int mSpeed = 60;
+
+   resetEncoderISRCount();
+
+   // Set Left Motor Foward
+   MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT);
+   // Set Right Motor Backward
+   MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_RIGHT);
+
+  // Go forward until step value is reached
+  while (interrupts > getLeftISRCount() && interrupts > getRightISRCount()) {
+   
+    if (interrupts > getLeftISRCount()) {
+        MOTOR_setSpeed(mSpeed, MOTOR_LEFT);
+    } 
+	else {
+    	MOTOR_setSpeed(0.f, MOTOR_LEFT);
+    }
+    if (interrupts >  getRightISRCount()) {
+    	MOTOR_setSpeed(mSpeed, MOTOR_RIGHT);
+    } 
+	else {
+   		MOTOR_setSpeed(0.f, MOTOR_RIGHT);
+    }
+   }
+    
+  MOTOR_setSpeed(0.f, MOTOR_LEFT);
+  MOTOR_setSpeed(0.f, MOTOR_RIGHT);  // Stop when done
+  resetEncoderISRCount();
+ 
 }

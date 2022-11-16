@@ -1,17 +1,15 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(PICO C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
-# initialize pico-sdk from GIT
-# (note this can come from environment, CMake cache etc)
-set(PICO_SDK_FETCH_FROM_GIT on)
-
 # Pull in Raspberry Pi Pico SDK (must be before project)
-include(pico_sdk_import.cmake)
+# include(pico_sdk_import.cmake)
+set(PICO_SDK_PATH $ENV{PICO_SDK_PATH})
+set(PICO_SDK_INIT_CMAKE_FILE ${PICO_SDK_PATH}/pico_sdk_init.cmake)
+include(${PICO_SDK_INIT_CMAKE_FILE})
 
-project(robotcar C CXX ASM)
+project(RobotCar C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
@@ -23,7 +21,7 @@ add_subdirectory(InfraredSensor)
 # Add executable.
 add_executable(robotcar main.c)
 
-# pico_enable_stdio_uart(robotcar 1)
+pico_enable_stdio_uart(robotcar 0)
 pico_enable_stdio_usb(robotcar 1)
 
 # Add the standard library to the build

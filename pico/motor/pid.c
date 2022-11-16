@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "pid.h"
 
@@ -12,15 +13,15 @@ PID* PID_create(float kP, float kI, float kD, float setPoint, float min, float m
         newPID->setPoint = setPoint;
         newPID->min = min; // Minimum output
         newPID->max = max; // Maximum output
-        newPID->integral = 0;
+        newPID->p = newPID->i = newPID->d = 0;
     }
     return newPID;
 }
 
-float PID_run(PID* pid, float input) {
+int PID_run(PID* pid, float input) {
     float error = pid->setPoint - input;
 
-    float proportional = pid->kP * error;
+    pid->p = pid->kP * error;
 
     // Check if saturating and if sign bit of integral and error is the same.
     // If saturating it means the output is higher than specified limit of actuator.
@@ -34,17 +35,17 @@ float PID_run(PID* pid, float input) {
     //     output = proportional;
     // }
 
-    pid->integral += pid->kI * error;
+    pid->i += pid->kI * error;
 
-    if (pid->integral > pid->max) pid->integral = pid->max;
-    else if (pid->integral < pid->min) pid->integral = pid->min;
+    if (pid->i > pid->max) pid->i = pid->max;
+    else if (pid->i < pid->min) pid->i = pid->min;
 
-    float deriative = pid->kD * (input - pid->lastInput);
+    pid->d = pid->kD * (input - pid->lastInput);
 
     if (error < 0.01f)
-        pid->integral = 0;
+        pid->i = 0;
 
-    float output = proportional + pid->integral - deriative;
+    int output = round(pid->p + pid->i - pid->d);
 
     // Saturation check (output too low/high)
     if (output > pid->max) {
@@ -56,10 +57,6 @@ float PID_run(PID* pid, float input) {
     } else {
         pid->saturating = 0;
     }
-
-    char buf[50];
-    snprintf(buf, sizeof(buf), "[P] %.2f [I] %.2f [D] %.2f \r\n", proportional, pid->integral, deriative);
-    printf(buf);
 
     pid->lastError = error;
     pid->lastInput = input;
