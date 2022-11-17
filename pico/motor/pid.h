@@ -1,6 +1,11 @@
 #ifndef PID_H_
 #define PID_H_
 
+#define SPEED_NONE 0
+#define SPEED_LOW 1
+#define SPEED_MEDIUM 2
+#define SPEED_HIGH 3
+
 typedef struct _PID {
     float kP, kI, kD;
     float setPoint;
@@ -9,11 +14,11 @@ typedef struct _PID {
     // Controller memory
     float p, i, d;
     float lastError;
-    float lastInput;
-    unsigned char saturating; // Boolean
 } PID;
 
 PID* PID_create(float kP, float kI, float kD, float setPoint, float min, float max);
-int PID_run(PID* pid, float input);
+void PID_setTarget(PID *pid, float setPoint);
+void PID_setTargetSpeed(PID *pid, int speed);
+uint PID_run(PID* pid, float input, float deltaTime);
 
 #endif
