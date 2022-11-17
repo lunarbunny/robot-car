@@ -111,7 +111,7 @@ int main () {
                 // printf("T%i in miliseconds corrected: %i (%i) \n", i, charStartEndCheck[i], timeChanges[i]);
             }
 
-            printf("\n");
+            printf("New char detected\n");
             arrayVar = 0; // Reset var to start new char reading 
 
             /* Find if its long or short bars, black or white ooO ooA */
@@ -142,57 +142,30 @@ int main () {
                     h3 = timeChanges[i];
                 }
             }
-            // printf("TOP 1st is %i from T%i - T%i \n", h1, h1i, h1i + 1);
-            // printf("TOP 2nd is %i from T%i - T%i \n", h2, h2i, h2i + 1);
-            // printf("TOP 3rd is %i from T%i - T%i \n\n", h3, h3i, h3i + 1);
 
-
-            char black = 'B'; //black
-            char white = 'W'; //white
-
-            printf("0 short, 1 long, here are the results of the scan: \n");
+            /* Remembers the position of the long bars in respect to how the timings came in */
             for (int i = 0; i < 9; i++) {
                 if (i % 2) {
-                    if (i == h1i || i == h2i || i == h3i) {printf("T%i-T%i (%c1)\n", i, i+1, white); varcharStartEndStar[i] = 1;}
-                    else {printf("T%i-T%i (%c0) \n", i, i+1, white); varcharStartEndStar[i] = 0;}
+                    if (i == h1i || i == h2i || i == h3i) {varcharStartEndStar[i] = 1;}
+                    else { varcharStartEndStar[i] = 0;}
                 } 
                 else {
-                    if (i == h1i || i == h2i || i == h3i) {printf("T%i-T%i (%c1)\n", i, i+1, black); varcharStartEndStar[i] = 1;}
-                    else {printf("T%i-T%i (%c0) \n", i, i+1, black); varcharStartEndStar[i] = 0;}
+                    if (i == h1i || i == h2i || i == h3i) { varcharStartEndStar[i] = 1;}
+                    else { varcharStartEndStar[i] = 0;}
                 }
             }
-
-            // PRINTING CHARACTER READ 
-            // printf("\n ***** \t BEGIN COMPARING CHAR: \t *****\n");
-
-            // LOGIC
-            // if first char = *
-            // {
-            //     clear first char value, clear dataChar, disable fcfs
-                
-            //     loop{
-            //         dataChar = read 0-9 edges
-            //         compare dataChar with character list
-            //         if (dataChar = *) {break;}
-            //     }
-            // }
 
             // If character = * || Used to know when to deliver message - By looking at if got starting and ending character
             if (compareArray(varcharStartEndStar, charStartEndStar)==0 && varCharASCII != '*')
             {
-                printf("star detected :)\n");
-                printf("countStar is equals to: %i \n", countStar);
-
                 varCharASCII = '*'; // Prevent looping in case of slow reading
                 if (countStar < 2) {
                     countStar ++;
                     // printf("=====ANNEYONG IDK KOREAN=====> %i", countStar);
                 }
-
-                printf("exiting star detected with: %i stars \n", countStar);
             }
 
-
+            /* START CHARACTER SORTING */
             // If first number in data section of array starts with 1 
             // KRAHOE185MC3U.YW
             if (varcharStartEndStar[0]){ // Currently using varcharStartEndStar, 
@@ -304,16 +277,9 @@ int main () {
                     }
                 }
             }
+            /* END CHARACTER SORTING */
 
-            // printf("Hi-> %d", (int)(varCharASCII));
             strncat(finalString, &varCharASCII, 1); // Concatenating the characters into var finalString
-            
-            // printf("END READING CHAR\n");
-
-            // to print without the * at the beginning of the string
-            // char name[6] = "vamsi";
-            // char *result = name+1;
-            // printf("%s\n",result);   
         }
 
         /* WHEN COUNTSTAR = 2, PRINT THE FINAL STRING HERE */
@@ -329,7 +295,7 @@ int main () {
         {
             if (infraFlag == true) {
                 infraFlag = false; 
-                printf("T%i: %i\n", arrayVar, time_us_32()/1000); 
+                sleep_us(12); // Delay of at least 10 microseconds NEEDS to be here otherwise it wont work
                 charStartEndCheck[arrayVar] = time_us_32()/1000;
                 arrayVar += 1;
                 
@@ -340,7 +306,7 @@ int main () {
         else {
             if (infraFlag == false) {
                 infraFlag = true; 
-                printf("T%i: %i\n", arrayVar, time_us_32()/1000);
+                sleep_us(12); // Delay of at least 10 microseconds NEEDS to be here otherwise it wont work
                 charStartEndCheck[arrayVar] = time_us_32()/1000;
                 arrayVar += 1;
             }
