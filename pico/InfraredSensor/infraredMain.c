@@ -161,7 +161,6 @@ int main () {
                     else {printf("T%i-T%i (%c0) \n", i, i+1, black); varcharStartEndStar[i] = 0;}
                 }
             }
-            printf("countStar is equals to: %i \n", countStar);
 
             // PRINTING CHARACTER READ 
             // printf("\n ***** \t BEGIN COMPARING CHAR: \t *****\n");
@@ -182,11 +181,15 @@ int main () {
             if (compareArray(varcharStartEndStar, charStartEndStar)==0 && varCharASCII != '*')
             {
                 printf("star detected :)\n");
+                printf("countStar is equals to: %i \n", countStar);
+
                 varCharASCII = '*'; // Prevent looping in case of slow reading
                 if (countStar < 2) {
                     countStar ++;
                     // printf("=====ANNEYONG IDK KOREAN=====> %i", countStar);
                 }
+
+                printf("exiting star detected with: %i stars \n", countStar);
             }
 
 
@@ -317,6 +320,7 @@ int main () {
         if (countStar >= 2) {
             printf("\n\n YOUR FINAL READING IS ON THE FOLLOWING LINE: \n \033[1;31m %s \033[0m", finalString);
             countStar = 0; // Reset count star
+            varCharASCII = '~'; // Reset variable
             strcpy(finalString, ""); // Clear contents of string
         }
 
