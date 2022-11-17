@@ -161,6 +161,7 @@ int main () {
                     else {printf("T%i-T%i (%c0) \n", i, i+1, black); varcharStartEndStar[i] = 0;}
                 }
             }
+            printf("countStar is equals to: %i \n", countStar);
 
             // PRINTING CHARACTER READ 
             // printf("\n ***** \t BEGIN COMPARING CHAR: \t *****\n");
@@ -180,15 +181,12 @@ int main () {
             // If character = * || Used to know when to deliver message - By looking at if got starting and ending character
             if (compareArray(varcharStartEndStar, charStartEndStar)==0 && varCharASCII != '*')
             {
+                printf("star detected :)\n");
                 varCharASCII = '*'; // Prevent looping in case of slow reading
                 if (countStar < 2) {
                     countStar ++;
                     // printf("=====ANNEYONG IDK KOREAN=====> %i", countStar);
                 }
-                // if(countStar >= 2){
-                //     printf("\n\n YOUR FINAL READING IS ON THE FOLLOWING LINE: \n \033[1;31m %s \033[0m \n", finalString);
-                //     countStar = 0;  // Reset couter
-                // }
             }
 
 
@@ -271,8 +269,9 @@ int main () {
                             else {varCharASCII = ' ';}
                         }
                         else {
-                            // $/+
-                            if (compareArray(varcharStartEndStar, charDollar)==0) {varCharASCII = '$';}
+                            // $/*+
+                            if (compareArray(varcharStartEndStar, charStartEndStar)==0) {varCharASCII = '*';}
+                            else if (compareArray(varcharStartEndStar, charDollar)==0) {varCharASCII = '$';}
                             else if (compareArray(varcharStartEndStar, charBackslash)==0) {varCharASCII = '/';}
                             else {varCharASCII = '+';}
                         } 
@@ -303,7 +302,7 @@ int main () {
                 }
             }
 
-            printf("Hi-> %d", (int)(varCharASCII));
+            // printf("Hi-> %d", (int)(varCharASCII));
             strncat(finalString, &varCharASCII, 1); // Concatenating the characters into var finalString
             
             // printf("END READING CHAR\n");
