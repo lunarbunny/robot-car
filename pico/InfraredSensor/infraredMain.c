@@ -31,9 +31,8 @@ int main () {
     int timeChanges[9];         // Stores the differences in timings
 
     // Character Logic Variables
-    bool startReading = false;
+    int startReading = 0; 
     int varcharStartEndStar[9]; // Used for only comparing * (starting/ ending characters)
-    int arrayVarASCII = 0;      // Used in varcharStartEndStar = * loop to reset varCharASCII 
     int countStar = 0;
     char varCharASCII = '~'; // Used for storing main data character
     char finalString[22];   // 1 used for *, 1 to store ending char '/0' if not buffer overflow; 20 char storage
@@ -109,7 +108,7 @@ int main () {
             /* To sort and find out the diff between each time interval */
             for (int i = 0; i < 9; i++) {
                 timeChanges[i] = charStartEndCheck[i+1] - charStartEndCheck[i]; // Differences in each timing captured
-                printf("T%i in miliseconds corrected: %i (%i) \n", i, charStartEndCheck[i], timeChanges[i]);
+                // printf("T%i in miliseconds corrected: %i (%i) \n", i, charStartEndCheck[i], timeChanges[i]);
             }
 
             printf("\n");
@@ -143,9 +142,9 @@ int main () {
                     h3 = timeChanges[i];
                 }
             }
-            printf("TOP 1st is %i from T%i - T%i \n", h1, h1i, h1i + 1);
-            printf("TOP 2nd is %i from T%i - T%i \n", h2, h2i, h2i + 1);
-            printf("TOP 3rd is %i from T%i - T%i \n\n", h3, h3i, h3i + 1);
+            // printf("TOP 1st is %i from T%i - T%i \n", h1, h1i, h1i + 1);
+            // printf("TOP 2nd is %i from T%i - T%i \n", h2, h2i, h2i + 1);
+            // printf("TOP 3rd is %i from T%i - T%i \n\n", h3, h3i, h3i + 1);
 
 
             char black = 'B'; //black
@@ -164,7 +163,7 @@ int main () {
             }
 
             // PRINTING CHARACTER READ 
-            printf("\n ***** \t READING RESULT: \t *****\n");
+            // printf("\n ***** \t BEGIN COMPARING CHAR: \t *****\n");
 
             // LOGIC
             // if first char = *
@@ -178,24 +177,18 @@ int main () {
             //     }
             // }
 
-            // If character = *    
-            if (compareArray(varcharStartEndStar, charStartEndStar)==0) 
+            // If character = * || Used to know when to deliver message - By looking at if got starting and ending character
+            if (compareArray(varcharStartEndStar, charStartEndStar)==0 && varCharASCII != '*')
             {
-                countStar ++;
-                startReading = true;
-                while (startReading)
-                {
-                    if (compareArray(varcharStartEndStar, letterF)==0) {printf("\n\n 'F' is your data \n\n");}
-                    
-                    // Breaking loop
-                    if (compareArray(varcharStartEndStar, charStartEndStar)==0)
-                    {
-                        printf("\n FAK MAN \n");
-                        break;
-                    }
-                    break;
+                varCharASCII = '*'; // Prevent looping in case of slow reading
+                if (countStar < 2) {
+                    countStar ++;
+                    // printf("=====ANNEYONG IDK KOREAN=====> %i", countStar);
                 }
-                
+                // if(countStar >= 2){
+                //     printf("\n\n YOUR FINAL READING IS ON THE FOLLOWING LINE: \n \033[1;31m %s \033[0m \n", finalString);
+                //     countStar = 0;  // Reset couter
+                // }
             }
 
 
@@ -205,21 +198,38 @@ int main () {
                 if (varcharStartEndStar[8]) 
                 {
                     // U1AK
+                    if (compareArray(varcharStartEndStar, letterU)==0) {varCharASCII = 'U';}
+                    else if (compareArray(varcharStartEndStar, no1)==0) {varCharASCII = '1';}
+                    else if (compareArray(varcharStartEndStar, letterA)==0) {varCharASCII = 'A';}
+                    else {varCharASCII = 'K';}
                 } 
                 
                 else if (varcharStartEndStar[2])
                 {
                     // W3CM
+                    if (compareArray(varcharStartEndStar, letterW)==0) {varCharASCII = 'W';}
+                    else if (compareArray(varcharStartEndStar, no3)==0) {varCharASCII = '3';}
+                    else if (compareArray(varcharStartEndStar, letterC)==0) {varCharASCII = 'C';}
+                    else {varCharASCII = 'M';}
                 }
                 else if (varcharStartEndStar[6])
                 {
                     //.8HR
+                    if (compareArray(varcharStartEndStar, charPeriod)==0) {varCharASCII = '.';}
+                    else if (compareArray(varcharStartEndStar, no8)==0) {varCharASCII = '8';}
+                    else if (compareArray(varcharStartEndStar, letterH)==0) {varCharASCII = 'H';}
+                    else {varCharASCII = 'R';}
                 }
                 else 
                 {
                     // OE5Y
+                    if (compareArray(varcharStartEndStar, letterO)==0) {varCharASCII = 'O';}
+                    else if (compareArray(varcharStartEndStar, letterE)==0) {varCharASCII = 'E';}
+                    else if (compareArray(varcharStartEndStar, no5)==0) {varCharASCII = '5';}
+                    else {varCharASCII = 'Y';}
                 }
             } 
+            
             // If first number in data section of array starts with 0
             // QGNTDJ7%40LSBIPF296-+X*/$VZ SPACE
             else if (!varcharStartEndStar[0]) {
@@ -228,12 +238,24 @@ int main () {
                 {
                     if (varcharStartEndStar[2]) {
                         //V2BL
+                        if (compareArray(varcharStartEndStar, letterV)==0) {varCharASCII = 'V';}
+                        else if (compareArray(varcharStartEndStar, no2)==0) {varCharASCII = '2';}
+                        else if (compareArray(varcharStartEndStar, letterB)==0) {varCharASCII = 'B';}
+                        else {varCharASCII = 'L';}
                     }
                     else if (varcharStartEndStar[6]) {
                         //-7GQ
+                        if (compareArray(varcharStartEndStar, charDash)==0) {varCharASCII = '-';}
+                        else if (compareArray(varcharStartEndStar, no7)==0) {varCharASCII = '7';}
+                        else if (compareArray(varcharStartEndStar, letterG)==0) {varCharASCII = 'G';}
+                        else {varCharASCII = 'Q';}
                     }
                     else {
                         //X4DN
+                        if (compareArray(varcharStartEndStar, letterX)==0) {varCharASCII = 'X';}
+                        else if (compareArray(varcharStartEndStar, no4)==0) {varCharASCII = '4';}
+                        else if (compareArray(varcharStartEndStar, letterD)==0) {varCharASCII = 'D';}
+                        else {varCharASCII = 'N';}
                     }
                     
                 }
@@ -245,9 +267,14 @@ int main () {
                         // Z$/+ SPACE
                         if (varcharStartEndStar[2]) {
                             // Z SPACE
+                            if (compareArray(varcharStartEndStar, letterZ)==0) {varCharASCII = 'Z';}
+                            else {varCharASCII = ' ';}
                         }
                         else {
                             // $/+
+                            if (compareArray(varcharStartEndStar, charDollar)==0) {varCharASCII = '$';}
+                            else if (compareArray(varcharStartEndStar, charBackslash)==0) {varCharASCII = '/';}
+                            else {varCharASCII = '+';}
                         } 
                     }
                     else if (varcharStartEndStar[2])
@@ -255,29 +282,44 @@ int main () {
                         // 69FPIS
                         if (varcharStartEndStar[4]){
                             //6FP
+                            if (compareArray(varcharStartEndStar, no6)==0) {varCharASCII = '6';}
+                            else if (compareArray(varcharStartEndStar, letterF)==0) {varCharASCII = 'F';}
+                            else {varCharASCII = 'P';}
                         }
                         else {
                             //9IS
+                            if (compareArray(varcharStartEndStar, no9)==0) {varCharASCII = '9';}
+                            else if (compareArray(varcharStartEndStar, letterI)==0) {varCharASCII = 'I';}
+                            else {varCharASCII = 'S';}
                         }
                     }
                     else {
                         // 0%JT
+                        if (compareArray(varcharStartEndStar, no0)==0) {varCharASCII = '0';}
+                        else if (compareArray(varcharStartEndStar, charPercentage)==0) {varCharASCII = '%';}
+                        else if (compareArray(varcharStartEndStar, letterJ)==0) {varCharASCII = 'J';}
+                        else {varCharASCII = 'T';}
                     }
                 }
             }
 
-            // if (compareArray(varcharStartEndStar, charStartEndStar)==0) {printf("* \n");}
-            if (compareArray(varcharStartEndStar, letterF)==0) {printf("F \n");}
-            if (compareArray(varcharStartEndStar, charSpace)==0) {printf("SPACE \n");} 
-            printf(" END READING RESULT: \n");
+            printf("Hi-> %d", (int)(varCharASCII));
+            strncat(finalString, &varCharASCII, 1); // Concatenating the characters into var finalString
+            
+            // printf("END READING CHAR\n");
 
             // to print without the * at the beginning of the string
             // char name[6] = "vamsi";
             // char *result = name+1;
-            // printf("%s\n",result);
+            // printf("%s\n",result);   
         }
 
-        
+        /* WHEN COUNTSTAR = 2, PRINT THE FINAL STRING HERE */
+        if (countStar >= 2) {
+            printf("\n\n YOUR FINAL READING IS ON THE FOLLOWING LINE: \n \033[1;31m %s \033[0m", finalString);
+            countStar = 0; // Reset count star
+            strcpy(finalString, ""); // Clear contents of string
+        }
 
         /** SCANNING OF B/W **/
         if (gpio_get(GPIO_PIN_INFRARED_IN1) == 1) // BLACK BAR
