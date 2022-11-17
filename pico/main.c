@@ -9,9 +9,9 @@
 
 #define DEBUG
 
-#define PID_Kp 5.0f
-#define PID_Ki 1.0f
-#define PID_Kd 0.05f
+#define PID_Kp 2.f
+#define PID_Ki 2.f
+#define PID_Kd 0.f
 
 void show_clock_freqs(void)
 {

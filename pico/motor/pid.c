@@ -45,8 +45,7 @@ uint normalize(uint input)
     // transformed into 80%-100% to fit expected real life speeds.
     if (input > 0)
     {
-        float step = (100 - 80) / 100.f;
-        return 80 + roundf(input * step);
+        return 60 + roundf(input * 0.4f);
     }
     else
     {
@@ -56,7 +55,7 @@ uint normalize(uint input)
 
 void PID_setTarget(PID *pid, float setPoint)
 {
-    pid->setPoint = clamp(setPoint, 0.f, 25.f);
+    pid->setPoint = clamp(setPoint, 0.f, 50.f);
 }
 
 void PID_setTargetSpeed(PID *pid, int speed)
@@ -65,15 +64,16 @@ void PID_setTargetSpeed(PID *pid, int speed)
     {
     case SPEED_NONE:
         PID_setTarget(pid, 0.f);
+        pid->p = pid->i = pid->d = 0.f;
         break;
     case SPEED_LOW:
-        PID_setTarget(pid, 12.f);
+        PID_setTarget(pid, 25.f);
         break;
     case SPEED_MEDIUM:
-        PID_setTarget(pid, 18.f);
+        PID_setTarget(pid, 30.f);
         break;
     case SPEED_HIGH:
-        PID_setTarget(pid, 25.f);
+        PID_setTarget(pid, 35.f);
         break;
     }
 }
