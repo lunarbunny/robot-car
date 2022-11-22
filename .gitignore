@@ -60,4 +60,8 @@ build/
 # Code Composer Studio
 msp432/Debug/
 
+# MSP432
 !msp432p401r.cmd
+
+# Python venv
+.venv/
