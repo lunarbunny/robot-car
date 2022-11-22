@@ -41,7 +41,7 @@ void ULTRASONIC_init(void)
     printf("[Ultrasonic] Init done \n");
 }
 
-uint64_t getPulse(uint trigPin, uint echoPin)
+int64_t getPulse(uint trigPin, uint echoPin)
 {
     absolute_time_t startTime, endTime;
     gpio_put(trigPin, 1);
@@ -50,29 +50,36 @@ uint64_t getPulse(uint trigPin, uint echoPin)
 
     uint64_t width = 0;
 
+    printf("[a] %i | %u %u \n", gpio_get(echoPin), trigPin, echoPin);
+
     while (gpio_get(echoPin) == 0)
     {
         startTime = get_absolute_time();
     }
 
+    printf("[b] %i \n", gpio_get(echoPin));
+
     while (gpio_get(echoPin) == 1)
     {
+        printf("[c] %i \n", gpio_get(echoPin));
         width++;
         sleep_us(1);
         if (width > TIMEOUT)
-            return 0;
+            return -1;
     }
+
+    endTime = get_absolute_time();
 
     return absolute_time_diff_us(startTime, endTime);
 }
 
-uint64_t getCM(uint trigPin, uint echoPin)
+float getCM(uint trigPin, uint echoPin)
 {
-    uint64_t pulseLength = getPulse(trigPin, echoPin);
-    return pulseLength / 29 / 2;
+    int64_t pulseLength = getPulse(trigPin, echoPin);
+    return pulseLength / 58.f;
 }
 
-uint64_t ULTRASONIC_getCM(int ultrasonic)
+float ULTRASONIC_getCM(int ultrasonic)
 {
     if (ultrasonic == ULTRASONIC_FRONT)
     {

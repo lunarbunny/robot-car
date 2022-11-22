@@ -5,6 +5,7 @@
 #include "motor/motor.h"
 #include "motor/pid.h"
 #include "encoder/encoder.h"
+#include "ultrasonic/ultrasonic.h"
 #include "hardware/clocks.h"
 
 #define DEBUG
@@ -53,6 +54,7 @@ int main()
     // Initialize modules
     MOTOR_init();
     ENCODER_init();
+    ULTRASONIC_init();
 
     // Create PID contoller for motors
     PID *leftMotorPID = PID_create(PID_Kp, PID_Ki, PID_Kd, 0, 0, 100);
@@ -166,6 +168,18 @@ int main()
             break;
         case 'c':
             show_clock_freqs();
+            break;
+        case 'i': // Front US
+            printf("> [US] FRONT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_FRONT));
+            break;
+        case 'k': // Rear US
+            printf("> [US] REAR: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_REAR));
+            break;
+        case 'j': // Left US
+            printf("> [US] LEFT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_LEFT));
+            break;
+        case 'l': // Right US
+            printf("> [US] RIGHT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_RIGHT));
             break;
         }
 
