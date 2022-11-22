@@ -21,6 +21,7 @@ int MOTOR_getDirection(int motor);
 
 void MOTOR_spotTurn(int turnDirection, int angle);
 void MOTOR_moveFoward(int cm);
+void MOTOR_moveBackward(int cm);
 
 int CMtoSteps(float cm);
 #endif

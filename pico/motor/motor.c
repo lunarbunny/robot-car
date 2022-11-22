@@ -217,3 +217,17 @@ void MOTOR_moveFoward(int cm)
     ENCODER_waitForISRInterrupts(interrupts); // Wait until turn is done
     MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);     // Stop when done
 }
+
+void MOTOR_moveBackward(int cm)
+{
+    int interrupts = ENCODER_cmToSteps(cm);
+    int speed = 80;
+
+    // Set Motor Foward
+    MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_LEFT | MOTOR_RIGHT);
+
+    // Go forward until step value is reached
+    MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
+    ENCODER_waitForISRInterrupts(interrupts); // Wait until turn is done
+    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);     // Stop when done
+}
