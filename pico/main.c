@@ -192,6 +192,19 @@ int main()
     //         case 'c':
     //             show_clock_freqs();
     //             break;
+        // case 'i': // Front US
+        //     printf("> [US] FRONT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_FRONT));
+        //     break;
+        // case 'k': // Rear US
+        //     printf("> [US] REAR: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_REAR));
+        //     break;
+        // case 'j': // Left US
+        //     printf("> [US] LEFT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_LEFT));
+        //     break;
+        // case 'l': // Right US
+        //     printf("> [US] RIGHT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_RIGHT));
+        //     break;
+        
     //         }
 
     //         currentTime = get_absolute_time();
