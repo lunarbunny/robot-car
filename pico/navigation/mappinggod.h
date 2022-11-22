@@ -24,9 +24,6 @@ typedef struct
 	int connections[4]; // N, E, S, W
 } grid_stats;
 
-// For movement sensing
-int moveTo(int *current_x, int *current_y, int *direction, int coords[2]);
-
 // For mapping
 void populateProvidedMaze(grid_stats[MAZE_SIZE]);
 void mallocChecker(void *);
@@ -63,7 +60,8 @@ typedef struct
 
 void getTileInfo(mapping_struct *, int *);
 int chooseMovement(mapping_struct *);
-int checkVisited(int, int, int **, int);
+int checkVisited(mapping_struct *, int);
+int checkOpening(mapping_struct *, int);
 grid_stats *sortMappedMaze(grid_stats *, int *);
 void mallocChecker(void *);
 

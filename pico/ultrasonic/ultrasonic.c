@@ -50,18 +50,18 @@ int64_t getPulse(uint trigPin, uint echoPin)
 
     uint64_t width = 0;
 
-    printf("[a] %i | %u %u \n", gpio_get(echoPin), trigPin, echoPin);
+    // printf("[a] %i | %u %u \n", gpio_get(echoPin), trigPin, echoPin);
 
     while (gpio_get(echoPin) == 0)
     {
         startTime = get_absolute_time();
     }
 
-    printf("[b] %i \n", gpio_get(echoPin));
+    // printf("[b] %i \n", gpio_get(echoPin));
 
     while (gpio_get(echoPin) == 1)
     {
-        printf("[c] %i \n", gpio_get(echoPin));
+        // printf("[c] %i \n", gpio_get(echoPin));
         width++;
         sleep_us(1);
         if (width > TIMEOUT)
@@ -76,6 +76,9 @@ int64_t getPulse(uint trigPin, uint echoPin)
 float getCM(uint trigPin, uint echoPin)
 {
     int64_t pulseLength = getPulse(trigPin, echoPin);
+    if(pulseLength < 0){
+        return 50;
+    }
     return pulseLength / 58.f;
 }
 

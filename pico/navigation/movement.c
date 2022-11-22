@@ -1,6 +1,4 @@
-#include "pico/stdlib.h"
-#include "motor/motor.h"
-#include "motor/pid.h"
+#include "movement.h"
 
 void moveTo(int *current_x, int *current_y, int *direction, int to_x, int to_y)
 {
@@ -20,31 +18,72 @@ void moveTo(int *current_x, int *current_y, int *direction, int to_x, int to_y)
     else if (to_x - *current_x == -1)
         intended_dir = 3;
 
-    turn_operation = direction - intended_dir;
+    turn_operation = *direction - intended_dir;
     if (turn_operation < 0)
         turn_operation += 4;
 
     switch (turn_operation)
     {
     case 0:
-        MoveFoward(CMtoSteps(ONEUNIT));
-        *current_y--;
+        MOTOR_moveFoward(ONEUNIT);
+        (*current_y)--;
         break;
     case 1:
-        TurnRight();
-        *direction++;
-        MoveFoward(CMtoSteps(ONEUNIT));
-        current_x++;
+        MOTOR_spotTurn(MOTOR_TURN_CLOCKWISE, 90);
+        (*direction)++;
+        MOTOR_moveFoward(ONEUNIT);
+        (current_x)++;
         break;
     case 2:
-        MoveBackward(CMtoSteps(ONEUNIT));
-        *current_y++;
+        MOTOR_moveBackward(ONEUNIT);
+        (*current_y)++;
         break;
     case 3:
-        TurnLeft();
-        *direction--;
-        MoveFoward(CMtoSteps(ONEUNIT));
-        current_x--;
+        MOTOR_spotTurn(MOTOR_TURN_ANTICLOCKWISE, 90);
+        (*direction)--;
+        MOTOR_moveFoward(ONEUNIT);
+        (current_x)--;
+        break;
+    }
+}
+
+void moveDirection(mapping_struct *map, int *direction, int move_direction)
+{
+    int turn_operation = *direction - move_direction;
+    if (turn_operation < 0)
+        turn_operation += 4;
+
+    printf("turn op: %d\n", turn_operation);
+
+    switch (turn_operation)
+    {
+    case 0:
+        MOTOR_moveFoward(ONEUNIT);
+        // (map->current_position[1])--;
+        printf("forward!\n");
+        break;
+    case 1:
+        MOTOR_spotTurn(MOTOR_TURN_ANTICLOCKWISE, 90);
+        printf("left face!\n");
+        (*direction)--;
+        if (*direction < 0)
+            (*direction) += 4;
+        MOTOR_moveFoward(ONEUNIT);
+        // (map->current_position[0])++;
+        printf("forward!\n");
+        break;
+    case 2:
+        MOTOR_moveBackward(ONEUNIT);
+        // (map->current_position[1])++;
+        printf("backward!\n");
+        break;
+    case 3:
+        MOTOR_spotTurn(MOTOR_TURN_CLOCKWISE, 90);
+        printf("right face!\n");
+        (*direction)++;
+        MOTOR_moveFoward(ONEUNIT);
+        // (map->current_position[0])--;
+        printf("forward!\n");
         break;
     }
 }

@@ -5,6 +5,7 @@
 #include "motor/motor.h"
 #include "motor/pid.h"
 #include "encoder/encoder.h"
+#include "navigation/movement.h"
 #include "navigation/mappinggod.h"
 #include "hardware/clocks.h"
 #include "ultrasonic/ultrasonic.h"
@@ -192,19 +193,19 @@ int main()
     //         case 'c':
     //             show_clock_freqs();
     //             break;
-        // case 'i': // Front US
-        //     printf("> [US] FRONT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_FRONT));
-        //     break;
-        // case 'k': // Rear US
-        //     printf("> [US] REAR: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_REAR));
-        //     break;
-        // case 'j': // Left US
-        //     printf("> [US] LEFT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_LEFT));
-        //     break;
-        // case 'l': // Right US
-        //     printf("> [US] RIGHT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_RIGHT));
-        //     break;
-        
+    // case 'i': // Front US
+    //     printf("> [US] FRONT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_FRONT));
+    //     break;
+    // case 'k': // Rear US
+    //     printf("> [US] REAR: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_REAR));
+    //     break;
+    // case 'j': // Left US
+    //     printf("> [US] LEFT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_LEFT));
+    //     break;
+    // case 'l': // Right US
+    //     printf("> [US] RIGHT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_RIGHT));
+    //     break;
+
     //         }
 
     //         currentTime = get_absolute_time();
@@ -248,7 +249,7 @@ int main()
     //         sleep_ms(500);
     //     }
 
-    // Initialise map struct
+    //Initialise map struct
     mapping_struct map;
     map.mapped_count = 0;
     map.backstepped = 0;
@@ -275,12 +276,16 @@ int main()
 
     // Initialise bot direction, which ever direction it started in is its "north"
     int direction = 0;
-
-    sleep_ms(2000);
-    for (;;)
+    int move_to = 0;
+    while (1)
     {
+        sleep_ms(2000);
         getTileInfo(&map, &direction);
-        sleep_ms(1000);
+        sleep_ms(2000);
+        move_to = chooseMovement(&map);
+        printf("moveto: %d\n", move_to);
+        sleep_ms(2000);
+        moveDirection(&map, &direction, move_to);
     }
 
     // int possiblePaths[MAZE_SIZE][MAZE_SIZE][2];
