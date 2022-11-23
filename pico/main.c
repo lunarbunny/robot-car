@@ -55,6 +55,7 @@ int main()
     // Initialize modules
     MOTOR_init();
     ENCODER_init();
+    ACCELEROMETER_init();
     ULTRASONIC_init();
     COMMS_init();
 
@@ -223,6 +224,6 @@ int main()
 #endif
         }
 
-        sleep_ms(500);
+        sleep_ms(200);
     }
 }
