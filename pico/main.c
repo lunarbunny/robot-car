@@ -5,6 +5,7 @@
 #include "motor/motor.h"
 #include "motor/pid.h"
 #include "encoder/encoder.h"
+#include "comms/comms.h"
 #include "ultrasonic/ultrasonic.h"
 #include "hardware/clocks.h"
 
@@ -55,6 +56,7 @@ int main()
     MOTOR_init();
     ENCODER_init();
     ULTRASONIC_init();
+    COMMS_init();
 
     // Create PID contoller for motors
     PID *leftMotorPID = PID_create(PID_Kp, PID_Ki, PID_Kd, 0, 0, 100);

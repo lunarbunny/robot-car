@@ -18,6 +18,7 @@ add_subdirectory(motor)
 add_subdirectory(encoder)
 add_subdirectory(InfraredSensor)
 add_subdirectory(ultrasonic)
+add_subdirectory(comms)
 
 # Add executable.
 add_executable(robotcar main.c)
