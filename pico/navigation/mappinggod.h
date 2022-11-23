@@ -62,7 +62,7 @@ void getTileInfo(mapping_struct *, int *);
 int chooseMovement(mapping_struct *);
 int checkVisited(mapping_struct *, int);
 int checkOpening(mapping_struct *, int);
-grid_stats *sortMappedMaze(grid_stats *, int *);
+void *sortMappedMaze(mapping_struct *, int *);
 void mallocChecker(void *);
 
 #endif

@@ -188,23 +188,22 @@ int checkVisited(mapping_struct *map, int direction)
 }
 
 // returns a sorted array of structures. also sets an int pointer's values to the bots 0,0 position.
-grid_stats *sortMappedMaze(grid_stats *mapped_maze, int *position)
+void *sortMappedMaze(mapping_struct *map, int *position)
 {
-    grid_stats *sorted_maze = (grid_stats *)malloc(MAZE_SIZE * sizeof(grid_stats));
-    mallocChecker(sorted_maze);
+    grid_stats sorted_maze[MAZE_SIZE];
     int smallest_x = 0, smallest_y = 0, largest_x = 0, largest_y = 0;
     int counter = 0;
 
     for (int i = 0; i < MAZE_SIZE; i++)
     {
-        if (mapped_maze[i].coordinates[0] < smallest_x)
-            smallest_x = mapped_maze[i].coordinates[0];
-        if (mapped_maze[i].coordinates[1] < smallest_y)
-            smallest_y = mapped_maze[i].coordinates[1];
-        if (mapped_maze[i].coordinates[0] > largest_x)
-            largest_x = mapped_maze[i].coordinates[0];
-        if (mapped_maze[i].coordinates[1] > largest_y)
-            largest_y = mapped_maze[i].coordinates[1];
+        if (map->maze_info[i].coordinates[0] < smallest_x)
+            smallest_x = map->maze_info[i].coordinates[0];
+        if (map->maze_info[i].coordinates[1] < smallest_y)
+            smallest_y = map->maze_info[i].coordinates[1];
+        if (map->maze_info[i].coordinates[0] > largest_x)
+            largest_x = map->maze_info[i].coordinates[0];
+        if (map->maze_info[i].coordinates[1] > largest_y)
+            largest_y = map->maze_info[i].coordinates[1];
     }
 
     for (int y = smallest_y; y <= largest_y; y++)
@@ -213,14 +212,14 @@ grid_stats *sortMappedMaze(grid_stats *mapped_maze, int *position)
         {
             for (int i = 0; i < MAZE_SIZE; i++)
             {
-                if (mapped_maze[i].coordinates[0] == x && mapped_maze[i].coordinates[1] == y)
+                if (map->maze_info[i].coordinates[0] == x && map->maze_info[i].coordinates[1] == y)
                 {
-                    sorted_maze[counter].coordinates[0] = mapped_maze[i].coordinates[0];
-                    sorted_maze[counter].coordinates[1] = mapped_maze[i].coordinates[1];
-                    sorted_maze[counter].connections[0] = mapped_maze[i].connections[0];
-                    sorted_maze[counter].connections[1] = mapped_maze[i].connections[1];
-                    sorted_maze[counter].connections[2] = mapped_maze[i].connections[2];
-                    sorted_maze[counter].connections[3] = mapped_maze[i].connections[3];
+                    sorted_maze[counter].coordinates[0] = map->maze_info[i].coordinates[0];
+                    sorted_maze[counter].coordinates[1] = map->maze_info[i].coordinates[1];
+                    sorted_maze[counter].connections[0] = map->maze_info[i].connections[0];
+                    sorted_maze[counter].connections[1] = map->maze_info[i].connections[1];
+                    sorted_maze[counter].connections[2] = map->maze_info[i].connections[2];
+                    sorted_maze[counter].connections[3] = map->maze_info[i].connections[3];
                     counter++;
                     break;
                 }
@@ -234,10 +233,14 @@ grid_stats *sortMappedMaze(grid_stats *mapped_maze, int *position)
         sorted_maze[i].coordinates[1] += -smallest_y;
     }
 
-    position[0] = -smallest_x;
-    position[1] = -smallest_y;
+    int bot_pos_x = -smallest_x;
+    int bot_pos_y = -smallest_y;
 
-    return sorted_maze;
+    for (int i = 0; i < MAZE_SIZE; i++)
+    {
+        printf("(%d,%d) %d - %d - %d - %d\n", sorted_maze[i].coordinates[0], sorted_maze[i].coordinates[1], 
+        sorted_maze[i].connections[0], sorted_maze[i].connections[1], sorted_maze[i].connections[2], sorted_maze[i].connections[3]);
+    }
 }
 
 // ensure malloc success, eliminate catastrophic failure.

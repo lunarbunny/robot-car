@@ -249,7 +249,7 @@ int main()
     //         sleep_ms(500);
     //     }
 
-    //Initialise map struct
+    // Initialise map struct
     mapping_struct map;
     map.mapped_count = 0;
     map.backstepped = 0;
@@ -284,8 +284,15 @@ int main()
         sleep_ms(2000);
         move_to = chooseMovement(&map);
         printf("moveto: %d\n", move_to);
-        sleep_ms(2000);
-        moveDirection(&map, &direction, move_to);
+        if (move_to > 0)
+        {
+            sleep_ms(2000);
+            moveDirection(&map, &direction, move_to);
+        }
+        else{
+
+            break;
+        }
     }
 
     // int possiblePaths[MAZE_SIZE][MAZE_SIZE][2];
