@@ -53,12 +53,12 @@ void moveDirection(mapping_struct *map, int *direction, int move_direction)
     if (turn_operation < 0)
         turn_operation += 4;
 
-    printf("turn op: %d\n", turn_operation);
+    printf("move direction operation: %d\n", turn_operation);
 
     switch (turn_operation)
     {
     case 0:
-        MOTOR_moveFoward(ONEUNIT);
+        MOTOR_moveFoward(ONEUNIT-8);
         // (map->current_position[1])--;
         printf("forward!\n");
         break;
@@ -68,12 +68,13 @@ void moveDirection(mapping_struct *map, int *direction, int move_direction)
         (*direction)--;
         if (*direction < 0)
             (*direction) += 4;
-        MOTOR_moveFoward(ONEUNIT);
+        sleep_ms(500);
+        MOTOR_moveFoward(ONEUNIT-8);
         // (map->current_position[0])++;
         printf("forward!\n");
         break;
     case 2:
-        MOTOR_moveBackward(ONEUNIT);
+        MOTOR_moveBackward(ONEUNIT-8);
         // (map->current_position[1])++;
         printf("backward!\n");
         break;
@@ -81,7 +82,10 @@ void moveDirection(mapping_struct *map, int *direction, int move_direction)
         MOTOR_spotTurn(MOTOR_TURN_CLOCKWISE, 90);
         printf("right face!\n");
         (*direction)++;
-        MOTOR_moveFoward(ONEUNIT);
+        if (*direction > 3)
+            (*direction) -= 4;
+        sleep_ms(500);
+        MOTOR_moveFoward(ONEUNIT-8);
         // (map->current_position[0])--;
         printf("forward!\n");
         break;

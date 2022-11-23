@@ -77,7 +77,7 @@ float getCM(uint trigPin, uint echoPin)
 {
     int64_t pulseLength = getPulse(trigPin, echoPin);
     if(pulseLength < 0){
-        return 50;
+        return 0;
     }
     return pulseLength / 58.f;
 }

@@ -11,6 +11,7 @@
 
 // For movement sensing
 #define ONEUNIT 27
+#define SAFETY_DISTANCE 10
 
 // For mapping and navigation
 #define BUFFER_SIZE 16
@@ -62,7 +63,8 @@ void getTileInfo(mapping_struct *, int *);
 int chooseMovement(mapping_struct *);
 int checkVisited(mapping_struct *, int);
 int checkOpening(mapping_struct *, int);
-void *sortMappedMaze(mapping_struct *, int *);
+int getBacktrackDirection(mapping_struct *);
+void *sortMappedMaze(mapping_struct *);
 void mallocChecker(void *);
 
 #endif

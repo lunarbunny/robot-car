@@ -2,47 +2,67 @@
 
 void getTileInfo(mapping_struct *map, int *direction)
 {
+    // Stores FRONT, RIGHT, REAR, LEFT pings. Will contain 0-4, based on number of times wall is detected
+    int get_walls_five[4] = {0};
+
     map->maze_info[map->mapped_count].coordinates[0] = map->current_position[0];
     map->maze_info[map->mapped_count].coordinates[1] = map->current_position[1];
 
     printf("visited: %d (%d,%d)\n", map->mapped_count, map->current_position[0], map->current_position[1]);
     printf("direction var: %d\n", *direction);
 
+    printf("FRONT: %.2f\n", ULTRASONIC_getCM(ULTRASONIC_FRONT));
+    printf("RIGHT: %.2f\n", ULTRASONIC_getCM(ULTRASONIC_RIGHT));
+    printf("REAR: %.2f\n", ULTRASONIC_getCM(ULTRASONIC_REAR));
+    printf("LEFT: %.2f\n", ULTRASONIC_getCM(ULTRASONIC_LEFT));
+
     // Ultrasonic (has to calculate with absolute direction, not relative direction)
     switch (*direction)
     {
     case 0:
-        map->maze_info[map->mapped_count].connections[0] = ULTRASONIC_getCM(ULTRASONIC_FRONT) > (float)10 ? 1 : 0;
-        map->maze_info[map->mapped_count].connections[1] = ULTRASONIC_getCM(ULTRASONIC_RIGHT) > (float)10 ? 1 : 0;
-        map->maze_info[map->mapped_count].connections[2] = ULTRASONIC_getCM(ULTRASONIC_REAR) > (float)10 ? 1 : 0;
-        map->maze_info[map->mapped_count].connections[3] = ULTRASONIC_getCM(ULTRASONIC_LEFT) > (float)10 ? 1 : 0;
+        for (int i = 0; i < 5; i++)
+        {
+            get_walls_five[0] += ULTRASONIC_getCM(ULTRASONIC_FRONT) > (float)SAFETY_DISTANCE ? 1 : 0;
+            get_walls_five[1] += ULTRASONIC_getCM(ULTRASONIC_RIGHT) > (float)SAFETY_DISTANCE ? 1 : 0;
+            get_walls_five[2] += ULTRASONIC_getCM(ULTRASONIC_REAR) > (float)SAFETY_DISTANCE ? 1 : 0;
+            get_walls_five[3] += ULTRASONIC_getCM(ULTRASONIC_LEFT) > (float)SAFETY_DISTANCE ? 1 : 0;
+        }
         break;
     case 1:
-        map->maze_info[map->mapped_count].connections[1] = ULTRASONIC_getCM(ULTRASONIC_FRONT) > (float)10 ? 1 : 0;
-        map->maze_info[map->mapped_count].connections[2] = ULTRASONIC_getCM(ULTRASONIC_RIGHT) > (float)10 ? 1 : 0;
-        map->maze_info[map->mapped_count].connections[3] = ULTRASONIC_getCM(ULTRASONIC_REAR) > (float)10 ? 1 : 0;
-        map->maze_info[map->mapped_count].connections[0] = ULTRASONIC_getCM(ULTRASONIC_LEFT) > (float)10 ? 1 : 0;
+        for (int i = 0; i < 5; i++)
+        {
+            get_walls_five[1] += ULTRASONIC_getCM(ULTRASONIC_FRONT) > (float)SAFETY_DISTANCE ? 1 : 0;
+            get_walls_five[2] += ULTRASONIC_getCM(ULTRASONIC_RIGHT) > (float)SAFETY_DISTANCE ? 1 : 0;
+            get_walls_five[3] += ULTRASONIC_getCM(ULTRASONIC_REAR) > (float)SAFETY_DISTANCE ? 1 : 0;
+            get_walls_five[0] += ULTRASONIC_getCM(ULTRASONIC_LEFT) > (float)SAFETY_DISTANCE ? 1 : 0;
+        }
         break;
     case 2:
-        map->maze_info[map->mapped_count].connections[2] = ULTRASONIC_getCM(ULTRASONIC_FRONT) > (float)10 ? 1 : 0;
-        map->maze_info[map->mapped_count].connections[3] = ULTRASONIC_getCM(ULTRASONIC_RIGHT) > (float)10 ? 1 : 0;
-        map->maze_info[map->mapped_count].connections[0] = ULTRASONIC_getCM(ULTRASONIC_REAR) > (float)10 ? 1 : 0;
-        map->maze_info[map->mapped_count].connections[1] = ULTRASONIC_getCM(ULTRASONIC_LEFT) > (float)10 ? 1 : 0;
+        for (int i = 0; i < 5; i++)
+        {
+            get_walls_five[2] += ULTRASONIC_getCM(ULTRASONIC_FRONT) > (float)SAFETY_DISTANCE ? 1 : 0;
+            get_walls_five[3] += ULTRASONIC_getCM(ULTRASONIC_RIGHT) > (float)SAFETY_DISTANCE ? 1 : 0;
+            get_walls_five[0] += ULTRASONIC_getCM(ULTRASONIC_REAR) > (float)SAFETY_DISTANCE ? 1 : 0;
+            get_walls_five[1] += ULTRASONIC_getCM(ULTRASONIC_LEFT) > (float)SAFETY_DISTANCE ? 1 : 0;
+        }
         break;
     case 3:
-        map->maze_info[map->mapped_count].connections[3] = ULTRASONIC_getCM(ULTRASONIC_FRONT) > (float)10 ? 1 : 0;
-        map->maze_info[map->mapped_count].connections[0] = ULTRASONIC_getCM(ULTRASONIC_RIGHT) > (float)10 ? 1 : 0;
-        map->maze_info[map->mapped_count].connections[1] = ULTRASONIC_getCM(ULTRASONIC_REAR) > (float)10 ? 1 : 0;
-        map->maze_info[map->mapped_count].connections[2] = ULTRASONIC_getCM(ULTRASONIC_LEFT) > (float)10 ? 1 : 0;
+        for (int i = 0; i < 5; i++)
+        {
+            get_walls_five[3] += ULTRASONIC_getCM(ULTRASONIC_FRONT) > (float)SAFETY_DISTANCE ? 1 : 0;
+            get_walls_five[0] += ULTRASONIC_getCM(ULTRASONIC_RIGHT) > (float)SAFETY_DISTANCE ? 1 : 0;
+            get_walls_five[1] += ULTRASONIC_getCM(ULTRASONIC_REAR) > (float)SAFETY_DISTANCE ? 1 : 0;
+            get_walls_five[2] += ULTRASONIC_getCM(ULTRASONIC_LEFT) > (float)SAFETY_DISTANCE ? 1 : 0;
+        }
         break;
     }
 
-    // printf("%.2f\n", ULTRASONIC_getCM(ULTRASONIC_FRONT));
-    // printf("%.2f\n", ULTRASONIC_getCM(ULTRASONIC_RIGHT));
-    // printf("%.2f\n", ULTRASONIC_getCM(ULTRASONIC_REAR));
-    // printf("%.2f\n", ULTRASONIC_getCM(ULTRASONIC_LEFT));
-    printf("NESW: %d - %d - %d - %d)\n", map->maze_info[map->mapped_count].connections[0], map->maze_info[map->mapped_count].connections[1],
-           map->maze_info[map->mapped_count].connections[2], map->maze_info[map->mapped_count].connections[3]);
+    for (int i = 0; i < 4; i++)
+    {
+        map->maze_info[map->mapped_count].connections[i] = get_walls_five[i] >= 3 ? 1 : 0;
+    }
+
+    printf("%d (N) - %d (E) - %d (S) - %d(W)\n", get_walls_five[0], get_walls_five[1], get_walls_five[2], get_walls_five[3]);
 
     map->mapped_count++;
 }
@@ -55,12 +75,12 @@ int chooseMovement(mapping_struct *map)
     // printf("visited: %d\n", map->visited_coords_size);
 
     // if visited is more than 0 AND car is at start position AND all 4 directions have been visited, exit
-    if (map->visited_coords_size > 0 && (map->current_position[0] == map->start_position[0] && map->current_position[1] == map->start_position[1]) &&
-        (map->maze_info[0].connections[0] == 1 && checkVisited(map, 0)) &&
-        (map->maze_info[0].connections[1] == 1 && checkVisited(map, 1)) &&
-        (map->maze_info[0].connections[2] == 1 && checkVisited(map, 2)) &&
-        (map->maze_info[0].connections[3] == 1 && checkVisited(map, 3)))
+    // 4 direction check: !(0 || 0 || 0 || 0), all must either have no connection or be visited to fulfill 0, if all 0, !0 = 1
+    if (map->visited_coords_size > 0 && (map->current_position[0] == map->start_position[0] && map->current_position[1] == map->start_position[1]) && !(
+        (map->maze_info[0].connections[0] == 1 && !checkVisited(map, 0)) || (map->maze_info[0].connections[1] == 1 && !checkVisited(map, 1)) ||
+        (map->maze_info[0].connections[2] == 1 && !checkVisited(map, 2)) || (map->maze_info[0].connections[3] == 1 && !checkVisited(map, 3))))
     {
+        printf("im leaving!\n");
         return -1;
     }
 
@@ -110,6 +130,7 @@ int chooseMovement(mapping_struct *map)
     else
     {
         // step back once
+        chosen_direction = getBacktrackDirection(map);
         (map->bot_path_size)--;
         map->current_position[0] = map->bot_path[map->bot_path_size - 1][0];
         map->current_position[1] = map->bot_path[map->bot_path_size - 1][1];
@@ -147,6 +168,8 @@ int checkVisited(mapping_struct *map, int direction)
         {
             if (map->visited_coords[i][0] == map->current_position[0] && map->visited_coords[i][1] == map->current_position[1] - 1)
             {
+                printf("found match at current: %d,%d checking: %d,%d\n", map->current_position[0], map->current_position[1],
+                       map->visited_coords[i][0], map->visited_coords[i][1] - 1);
                 flag = 1;
                 break;
             }
@@ -157,6 +180,8 @@ int checkVisited(mapping_struct *map, int direction)
         {
             if (map->visited_coords[i][0] == map->current_position[0] + 1 && map->visited_coords[i][1] == map->current_position[1])
             {
+                printf("found match at current: %d,%d checking: %d,%d\n", map->current_position[0], map->current_position[1],
+                       map->visited_coords[i][0] + 1, map->visited_coords[i][1]);
                 flag = 1;
                 break;
             }
@@ -167,6 +192,8 @@ int checkVisited(mapping_struct *map, int direction)
         {
             if (map->visited_coords[i][0] == map->current_position[0] && map->visited_coords[i][1] == map->current_position[1] + 1)
             {
+                printf("found match at current: %d,%d checking: %d,%d\n", map->current_position[0], map->current_position[1],
+                       map->visited_coords[i][0], map->visited_coords[i][1] + 1);
                 flag = 1;
                 break;
             }
@@ -177,6 +204,8 @@ int checkVisited(mapping_struct *map, int direction)
         {
             if (map->visited_coords[i][0] == map->current_position[0] - 1 && map->visited_coords[i][1] == map->current_position[1])
             {
+                printf("found match at current: %d,%d checking: %d,%d\n", map->current_position[0], map->current_position[1],
+                       map->visited_coords[i][0] - 1, map->visited_coords[i][1]);
                 flag = 1;
                 break;
             }
@@ -187,13 +216,32 @@ int checkVisited(mapping_struct *map, int direction)
     return flag;
 }
 
+int getBacktrackDirection(mapping_struct *map)
+{
+    int x_diff = 0;
+
+    x_diff = map->current_position[0] - map->bot_path[(map->bot_path_size - 1) - 1][0];
+    if (x_diff != 0)
+    {
+        return x_diff > 0 ? 3 : 1;
+    }
+
+    int y_diff = 0;
+
+    y_diff = map->current_position[1] - map->bot_path[(map->bot_path_size - 1) - 1][1];
+    if (y_diff != 0)
+    {
+        return y_diff > 0 ? 0 : 2;
+    }
+}
+
 // returns a sorted array of structures. also sets an int pointer's values to the bots 0,0 position.
-void *sortMappedMaze(mapping_struct *map, int *position)
+void *sortMappedMaze(mapping_struct *map)
 {
     grid_stats sorted_maze[MAZE_SIZE];
     int smallest_x = 0, smallest_y = 0, largest_x = 0, largest_y = 0;
     int counter = 0;
-
+    printf("begin sort!\n");
     for (int i = 0; i < MAZE_SIZE; i++)
     {
         if (map->maze_info[i].coordinates[0] < smallest_x)
@@ -226,20 +274,21 @@ void *sortMappedMaze(mapping_struct *map, int *position)
             }
         }
     }
-
+    printf("sorted maze filled!\n");
     for (int i = 0; i < MAZE_SIZE; i++)
     {
         sorted_maze[i].coordinates[0] += -smallest_x;
         sorted_maze[i].coordinates[1] += -smallest_y;
     }
+     printf("sorted maze normalised!\n");
 
     int bot_pos_x = -smallest_x;
     int bot_pos_y = -smallest_y;
-
+    printf("bot position: (%d %d)\n", bot_pos_x, bot_pos_y);
     for (int i = 0; i < MAZE_SIZE; i++)
     {
-        printf("(%d,%d) %d - %d - %d - %d\n", sorted_maze[i].coordinates[0], sorted_maze[i].coordinates[1], 
-        sorted_maze[i].connections[0], sorted_maze[i].connections[1], sorted_maze[i].connections[2], sorted_maze[i].connections[3]);
+        printf("(%d,%d) %d - %d - %d - %d\n", sorted_maze[i].coordinates[0], sorted_maze[i].coordinates[1],
+               sorted_maze[i].connections[0], sorted_maze[i].connections[1], sorted_maze[i].connections[2], sorted_maze[i].connections[3]);
     }
 }
 
