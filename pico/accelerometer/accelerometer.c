@@ -7,27 +7,41 @@
 #include "hardware/i2c.h"
 #include "accelerometer.h"
 
+#define SDA_PIN 4
+#define SCL_PIN 5
+
 // get raw data of acceleration and gyroscope
 int16_t acc[MAXLEN], gyro[MAXLEN];
 int addr = 0x68;
 // record start time when boot pico
 absolute_time_t startTime;
+absolute_time_t startTime1, endTime1;
+bool slope_detect = false;
+
+// get predicted angle
+float predictedX;
+// to detect amout of h
+float triangle_h;
+float height;
+float speed = 30;
+float speed_t;
+float radianHighest, degreeHighest;
 
 void ACCELEROMETER_init(void)
 {
-    stdio_init_all();
+    printf("[Accelerometer] Init start \n");
 
     i2c_init(i2c_default, 400 * 1000);
     gpio_set_function(SDA_PIN, GPIO_FUNC_I2C);
     gpio_set_function(SCL_PIN, GPIO_FUNC_I2C);
     gpio_pull_up(SDA_PIN);
     gpio_pull_up(SCL_PIN);
-    // Make the I2C pins available to picotool
-    bi_decl(bi_2pins_with_func(SDA_PIN, SCL_PIN, GPIO_FUNC_I2C));
 
     mpu6050_reset();
 
     startTime = get_absolute_time();
+
+    printf("[Accelerometer] Init done \n");
 }
 
 float filterMeasurement(void)
@@ -93,17 +107,6 @@ float filterMeasurement(void)
 
 float ACCELEROMETER_detectHump(void)
 {
-    // get predicted angle
-    float predictedX;
-    // to detect amout of h
-    absolute_time_t startTime1, endTime1;
-    bool slope_detect = false;
-    float triangle_h;
-    float height;
-    float speed = 30;
-    float speed_t;
-    float radianHighest, degreeHighest;
-
     predictedX = filterMeasurement();
 
     if (predictedX > 0 && predictedX > FIRSTRANGE)
@@ -129,12 +132,12 @@ float ACCELEROMETER_detectHump(void)
             radianHighest = degreeHighest * M_PI / 180;
             printf("go down slope: %.2f\n", radianHighest);
             slope_detect = false;
-            endTime1 = get_absolute_time();
+            //endTime1 = get_absolute_time();
             speed_t = absolute_time_diff_us(startTime1, endTime1);
-            printf("t before: %.2f", speed_t);
+            printf("t before: %.2f\n", speed_t);
 
             speed_t = speed_t / 1000000;
-            printf("t after: %.2f", speed_t);
+            printf("t after: %.2f\n", speed_t);
             triangle_h = speed_t * speed;
             printf("triangle_h (1.5): %.4f\n", triangle_h);
             printf("sin radian (0.6): %.4f\n", sin(radianHighest));
@@ -146,10 +149,12 @@ float ACCELEROMETER_detectHump(void)
         }
     }
 
-    if (!slope_detect && degreeHighest) {
-        return -1;
+    if (!slope_detect && degreeHighest)
+    {
+        return -1.f;
     }
-    else return height;
+    else
+        return height;
 }
 
 // #ifdef i2c_default

@@ -225,6 +225,8 @@ int main()
 #endif
         }
 
-        sleep_ms(200);
+        float val = ACCELEROMETER_detectHump();
+
+        sleep_ms(50);
     }
 }

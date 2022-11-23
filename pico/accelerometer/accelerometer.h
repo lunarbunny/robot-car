@@ -3,8 +3,6 @@
 
 #include "pico/stdlib.h"
 
-#define SDA_PIN 4
-#define SCL_PIN 5
 #define MAXLEN 3
 #define WINDOWLEN 4
 #define FIRSTRANGE 1.5
