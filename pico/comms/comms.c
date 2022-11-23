@@ -15,7 +15,7 @@
 #define KEY_MAPPING 3
 #define KEY_BARCODE 4
 
-void COMMS_init()
+void COMMS_init(void)
 {
     // Set up our UART with the required speed.
     uart_init(UART_ID, BAUD_RATE);
@@ -67,13 +67,4 @@ void COMMS_sendToM5(int key, char *str)
     }
     // send over to m5
     uart_puts(UART_ID, value);
-}
-
-int main()
-{
-    // how it sends over
-    sendToM5(1, "123");
-    sendToM5(2, "50");
-    sendToM5(3, "010");
-    sendToM5(4, "*A*");
 }

@@ -5,6 +5,7 @@
 #include "motor/motor.h"
 #include "motor/pid.h"
 #include "encoder/encoder.h"
+#include "accelerometer/accelerometer.h"
 #include "comms/comms.h"
 #include "ultrasonic/ultrasonic.h"
 #include "hardware/clocks.h"

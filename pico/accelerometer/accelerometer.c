@@ -1,9 +1,19 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
 #include "pico/stdlib.h"
+#include "pico/binary_info.h"
+#include "hardware/i2c.h"
+#include "accelerometer.h"
 
 // get raw data of acceleration and gyroscope
 int16_t acc[MAXLEN], gyro[MAXLEN];
+int addr = 0x68;
+// record start time when boot pico
+absolute_time_t startTime;
 
-void ACCELEROMETER_init()
+void ACCELEROMETER_init(void)
 {
     stdio_init_all();
 
@@ -20,14 +30,12 @@ void ACCELEROMETER_init()
     startTime = get_absolute_time();
 }
 
-float filterMeasurement()
+float filterMeasurement(void)
 {
-    // record start time when boot pico
-    static absolute_time_t startTime;
     // find difference in time of start time and end time
     float diffTime, diffSeconds;
     // measurement and prediction variables
-    float measuredX, kalmanX, complementaryX, movingAverageX;
+    float measuredX, kalmanX, movingAverageX;
 
     // kalman initialization
     float SensorData;
@@ -60,8 +68,6 @@ float filterMeasurement()
     // kalman filter algorithm
     kalmanX = kalmanFilter(1, 0.01, measuredX, &Xt_prev, &Pt_prev);
     float kalmanX2 = kalmanFilter(10, 0.1, measuredX, &Xt_prev, &Pt_prev);
-    // complementary filter algorithm
-    complementaryX = complementaryFilter(gyro, measuredX, prevTime);
     // moving average filter algorithm
     movingAverageX = movingAverageFilter(dataArray, &sum, position, measuredX);
 
@@ -85,7 +91,7 @@ float filterMeasurement()
     return kalmanX;
 }
 
-float ACCELEROMETER_detectHump()
+float ACCELEROMETER_detectHump(void)
 {
     // get predicted angle
     float predictedX;
@@ -147,7 +153,7 @@ float ACCELEROMETER_detectHump()
 }
 
 // #ifdef i2c_default
-void mpu6050_reset()
+void mpu6050_reset(void)
 {
     // Two byte reset. First byte register, second byte data
     // There are a load more options to set up the device in different ways that could be added here
@@ -195,16 +201,6 @@ float kalmanFilter(float R, float Q, float measuredX, float *Xt_prev, float *Pt_
     *Xt_prev = Xt;
     *Pt_prev = Pt;
     return Xt;
-}
-
-float complementaryFilter(int16_t gyro[MAXLEN], float measuredX, absolute_time_t prevTime)
-{
-    absolute_time_t currentTime = get_absolute_time();
-    float diffTime = absolute_time_diff_us(prevTime, currentTime);
-    float diffSeconds = diffTime / 1000000;
-    float gyroXrate = gyro[0] / 131.0;                                                 // Convert to deg/s
-    float filteredX = 0.93 * (measuredX + gyroXrate * diffSeconds) + 0.07 * measuredX; // Calculate the angle using a Complimentary filter
-    return filteredX;
 }
 
 float movingAverageFilter(float *ptrDataArray, float *ptrSum, int position, float nextData)

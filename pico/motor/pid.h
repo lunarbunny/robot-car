@@ -19,6 +19,6 @@ typedef struct _PID {
 PID* PID_create(float kP, float kI, float kD, float setPoint, float min, float max);
 void PID_setTarget(PID *pid, float setPoint);
 void PID_setTargetSpeed(PID *pid, int speed);
-uint PID_run(PID* pid, float input, float deltaTime);
+int PID_run(PID* pid, float input, float deltaTime);
 
 #endif

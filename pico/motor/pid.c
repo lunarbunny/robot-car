@@ -38,7 +38,7 @@ float clampF(float input, float min, float max)
     return input;
 }
 
-uint normalize(uint input)
+int normalize(int input)
 {
     // Motors only have enough torque to start moving at ~80% duty cycle
     // So we normalize the speed so that the original PID output of 0-100% is
@@ -78,7 +78,7 @@ void PID_setTargetSpeed(PID *pid, int speed)
     }
 }
 
-uint PID_run(PID *pid, float input, float deltaTime)
+int PID_run(PID *pid, float input, float deltaTime)
 {
     float error = pid->setPoint - input;
 
@@ -89,7 +89,7 @@ uint PID_run(PID *pid, float input, float deltaTime)
 
     pid->d = pid->kD * (error - pid->lastError) / deltaTime;
 
-    uint output = pid->p + pid->i + pid->d;
+    int output = pid->p + pid->i + pid->d;
     output = clamp(output, pid->min, pid->max);
 
     pid->lastError = error;
