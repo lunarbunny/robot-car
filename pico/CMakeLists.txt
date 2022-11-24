@@ -27,6 +27,6 @@ pico_enable_stdio_uart(robotcar 0)
 pico_enable_stdio_usb(robotcar 1)
 
 # Link required library to the binary
-target_link_libraries(robotcar motor encoder pid accelerometer ultrasonic comms pico_stdlib)
+target_link_libraries(robotcar motor pid encoder infrared accelerometer ultrasonic comms pico_stdlib)
 
 pico_add_extra_outputs(robotcar)

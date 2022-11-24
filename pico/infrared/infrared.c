@@ -329,7 +329,7 @@ void INFRARED_sortingTimings() {
 }
 
 
-int main () {
+int main_infrared () {
     stdio_init_all(); // For printing into PUTTY program
 
     // Main loop
