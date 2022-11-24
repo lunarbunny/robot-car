@@ -20,6 +20,17 @@ bool slope_detect = false;
 
 // get predicted angle
 float predictedX;
+
+// kalman initialization
+float Xt_prev;
+float Pt_prev = 1.0;
+
+// moving average initialization
+// array to store data every n times (as defined as window size) and calculate the average
+float dataArray[WINDOWLEN] = {0.0};
+float sum = 0.0;
+int position = 0;
+
 // to detect amout of h
 float triangle_h;
 float height;
@@ -46,30 +57,17 @@ void ACCELEROMETER_init(void)
 
 float filterMeasurement(void)
 {
-    // find difference in time of start time and end time
-    float diffTime, diffSeconds;
     // measurement and prediction variables
     float measuredX, kalmanX, movingAverageX;
-
-    // kalman initialization
-    float SensorData;
-    float Xt_prev;
-    float Pt_prev = 1.0;
 
     // complementary initialization
     // record previous time
     absolute_time_t prevTime;
 
-    // moving average initialization
-    // array to store data every n times (as defined as window size) and calculate the average
-    float dataArray[WINDOWLEN] = {0.0};
-    float sum = 0.0;
-    int position = 0;
-
     absolute_time_t endTime = get_absolute_time();
     // find time difference in micro seconds and convert to seconds
-    diffTime = absolute_time_diff_us(startTime, endTime);
-    diffSeconds = diffTime / 1000000;
+    float diffTime = absolute_time_diff_us(startTime, endTime);
+    float diffSeconds = diffTime / 1000000;
 
     // run for 30s -- FOR NOW --
     // if (diffSeconds <= (float)10000)
@@ -132,7 +130,7 @@ float ACCELEROMETER_detectHump(void)
             radianHighest = degreeHighest * M_PI / 180;
             printf("go down slope: %.2f\n", radianHighest);
             slope_detect = false;
-            //endTime1 = get_absolute_time();
+            // endTime1 = get_absolute_time();
             speed_t = absolute_time_diff_us(startTime1, endTime1);
             printf("t before: %.2f\n", speed_t);
 
