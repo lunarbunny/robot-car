@@ -295,7 +295,7 @@ int main () {
         {
             if (infraFlag == true) {
                 infraFlag = false; 
-                sleep_us(12); // Delay of at least 10 microseconds NEEDS to be here otherwise it wont work
+                sleep_us(100); // Delay of at least 10 microseconds NEEDS to be here otherwise it wont work
                 charStartEndCheck[arrayVar] = time_us_32()/1000;
                 arrayVar += 1;
                 
@@ -306,7 +306,7 @@ int main () {
         else {
             if (infraFlag == false) {
                 infraFlag = true; 
-                sleep_us(12); // Delay of at least 10 microseconds NEEDS to be here otherwise it wont work
+                sleep_us(100); // Delay of at least 10 microseconds NEEDS to be here otherwise it wont work
                 charStartEndCheck[arrayVar] = time_us_32()/1000;
                 arrayVar += 1;
             }
