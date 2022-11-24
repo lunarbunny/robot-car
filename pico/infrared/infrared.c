@@ -10,7 +10,7 @@
 #include "infrared.h"
 
 // Define Infrared Sensor Needs
-#define GPIO_PIN_INFRARED_IN1 15
+#define GPIO_PIN_INFRARED_IN1 26
 
  // Declarations
 volatile bool infraFlag = true;

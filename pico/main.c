@@ -34,7 +34,7 @@ int main()
     // Initialize modules
     MOTOR_init();
     ENCODER_init();
-    INFRARED_init();
+    //INFRARED_init();
     ACCELEROMETER_init();
     ULTRASONIC_init();
     COMMS_init();
