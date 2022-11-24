@@ -18,8 +18,8 @@
 
 #define TIMEOUT 26100
 
-float Xt_prev;
-float Pt_prev = 1.0;
+float ultrasonic_Xt_prev;
+float ultrasonic_Pt_prev = 1.0;
 
 void ULTRASONIC_init(void)
 {
@@ -79,7 +79,7 @@ float getCM(uint trigPin, uint echoPin)
 {
     float pulseLength = getPulse(trigPin, echoPin) / 58;
     printf("original cm %.2f\n", pulseLength);
-    float filteredPulseLength = kalmanFilter(10, 0.1, pulseLength, &Xt_prev, &Pt_prev);
+    float filteredPulseLength = kalmanFilter(10, 0.1, pulseLength, &ultrasonic_Xt_prev, &ultrasonic_Pt_prev);
     return filteredPulseLength;
 }
 
