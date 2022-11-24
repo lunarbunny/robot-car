@@ -4,6 +4,7 @@
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 
+#include "../accelerometer/kalman.h"
 #include "ultrasonic.h"
 
 #define GPIO_PIN_US_FRONT_TRIGGER 11
@@ -16,6 +17,9 @@
 #define GPIO_PIN_US_LEFT_ECHO 21
 
 #define TIMEOUT 26100
+
+float Xt_prev;
+float Pt_prev = 1.0;
 
 void ULTRASONIC_init(void)
 {
@@ -41,7 +45,7 @@ void ULTRASONIC_init(void)
     printf("[Ultrasonic] Init done \n");
 }
 
-int64_t getPulse(uint trigPin, uint echoPin)
+float getPulse(uint trigPin, uint echoPin)
 {
     absolute_time_t startTime, endTime;
     gpio_put(trigPin, 1);
@@ -53,9 +57,7 @@ int64_t getPulse(uint trigPin, uint echoPin)
     printf("[a] %i | %u %u \n", gpio_get(echoPin), trigPin, echoPin);
 
     while (gpio_get(echoPin) == 0)
-    {
-        startTime = get_absolute_time();
-    }
+    startTime = get_absolute_time();
 
     printf("[b] %i \n", gpio_get(echoPin));
 
@@ -75,8 +77,10 @@ int64_t getPulse(uint trigPin, uint echoPin)
 
 float getCM(uint trigPin, uint echoPin)
 {
-    int64_t pulseLength = getPulse(trigPin, echoPin);
-    return pulseLength / 58.f;
+    float pulseLength = getPulse(trigPin, echoPin) / 58;
+    printf("original cm %.2f\n", pulseLength);
+    float filteredPulseLength = kalmanFilter(10, 0.1, pulseLength, &Xt_prev, &Pt_prev);
+    return filteredPulseLength;
 }
 
 float ULTRASONIC_getCM(int ultrasonic)

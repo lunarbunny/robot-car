@@ -211,22 +211,18 @@ int main()
                 MOTOR_setSpeed(rightMotorDutyCycle, MOTOR_RIGHT);
             }
 
-#ifdef DEBUG
             // printf("PID Delta Time: %.6f (s) \n", deltaTime);
-            printf("SPD L: %.2f | DUTY L: %i | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", leftWheelSpeed, leftMotorDutyCycle, leftMotorPID->p, leftMotorPID->i, leftMotorPID->d, leftMotorPID->lastError);
-            printf("SPD R: %.2f | DUTY R: %i | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", rightWheelSpeed, rightMotorDutyCycle, rightMotorPID->p, rightMotorPID->i, rightMotorPID->d, rightMotorPID->lastError);
-#endif
+            printf("T: %.2f | SP: %.2f | SPD L: %.2f | DUTY L: %i | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", currentTime, leftMotorPID->setPoint, leftWheelSpeed, leftMotorDutyCycle, leftMotorPID->p, leftMotorPID->i, leftMotorPID->d, leftMotorPID->lastError);
+            printf("T: %.2f | SP: %.2f | SPD R: %.2f | DUTY R: %i | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", currentTime, rightMotorPID->setPoint, rightMotorDutyCycle, rightMotorPID->p, rightMotorPID->i, rightMotorPID->d, rightMotorPID->lastError);
         }
         else
         {
-#ifdef DEBUG
             printf("SPD L: %.2f | DUTY L: %i \n", leftWheelSpeed, MOTOR_getSpeed(MOTOR_LEFT));
             printf("SPD R: %.2f | DUTY R: %i \n", rightWheelSpeed, MOTOR_getSpeed(MOTOR_RIGHT));
-#endif
         }
 
         float val = ACCELEROMETER_detectHump();
 
-        sleep_ms(50);
+        sleep_ms(1000);
     }
 }
