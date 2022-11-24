@@ -5,6 +5,7 @@
 #include "motor/motor.h"
 #include "motor/pid.h"
 #include "encoder/encoder.h"
+#include "infrared/infrared.h"
 #include "accelerometer/accelerometer.h"
 #include "comms/comms.h"
 #include "ultrasonic/ultrasonic.h"
@@ -15,26 +16,6 @@
 #define PID_Kp 2.f
 #define PID_Ki 2.f
 #define PID_Kd 0.f
-
-void show_clock_freqs(void)
-{
-    uint f_pll_sys = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY);
-    uint f_pll_usb = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_PLL_USB_CLKSRC_PRIMARY);
-    uint f_rosc = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC);
-    uint f_clk_sys = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_SYS);
-    uint f_clk_peri = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_PERI);
-    uint f_clk_usb = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_USB);
-    uint f_clk_adc = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_ADC);
-
-    printf("pll_sys  = %dkHz\n"
-           "pll_usb  = %dkHz\n"
-           "rosc     = %dkHz\n"
-           "clk_sys  = %dkHz\n"
-           "clk_peri = %dkHz\n"
-           "clk_usb  = %dkHz\n"
-           "clk_adc  = %dkHz\n",
-           f_pll_sys, f_pll_usb, f_rosc, f_clk_sys, f_clk_peri, f_clk_usb, f_clk_adc);
-}
 
 void togglePid(uint8_t *flag)
 {
@@ -50,12 +31,10 @@ int main()
 
     printf("===== Starting pico ===== \n");
 
-    // Print clocks sources and their frequencies
-    show_clock_freqs();
-
     // Initialize modules
     MOTOR_init();
     ENCODER_init();
+    INFRARED_init();
     ACCELEROMETER_init();
     ULTRASONIC_init();
     COMMS_init();
@@ -64,7 +43,8 @@ int main()
     PID *leftMotorPID = PID_create(PID_Kp, PID_Ki, PID_Kd, 0, 0, 100);
     PID *rightMotorPID = PID_create(PID_Kp, PID_Ki, PID_Kd, 0, 0, 100);
 
-    absolute_time_t currentTime, previousTime;
+    absolute_time_t currentTime, previousTime, bootTime;
+    bootTime = get_absolute_time();
 
     float leftWheelSpeed, rightWheelSpeed;
     int leftWheelInterruptSpeed, rightWheelInterruptSpeed;
@@ -170,9 +150,6 @@ int main()
             MOTOR_moveFoward(10);
             printf("> [Motor] Move Foward \n");
             break;
-        case 'c':
-            show_clock_freqs();
-            break;
         case 'i': // Front US
             printf("> [US] FRONT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_FRONT));
             break;
@@ -212,8 +189,8 @@ int main()
             }
 
             // printf("PID Delta Time: %.6f (s) \n", deltaTime);
-            printf("T: %.2f | SP: %.2f | SPD L: %.2f | DUTY L: %i | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", currentTime, leftMotorPID->setPoint, leftWheelSpeed, leftMotorDutyCycle, leftMotorPID->p, leftMotorPID->i, leftMotorPID->d, leftMotorPID->lastError);
-            printf("T: %.2f | SP: %.2f | SPD R: %.2f | DUTY R: %i | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", currentTime, rightMotorPID->setPoint, rightMotorDutyCycle, rightMotorPID->p, rightMotorPID->i, rightMotorPID->d, rightMotorPID->lastError);
+            printf("T: %.2fs | SP: %.2f | SPD L: %.2f | DUTY L: %u | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", absolute_time_diff_us(bootTime, currentTime) / 1000000.f, leftMotorPID->setPoint, leftWheelSpeed, leftMotorDutyCycle, leftMotorPID->p, leftMotorPID->i, leftMotorPID->d, leftMotorPID->lastError);
+            printf("T: %.2fs | SP: %.2f | SPD R: %.2f | DUTY R: %u | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", absolute_time_diff_us(bootTime, currentTime) / 1000000.f, rightMotorPID->setPoint, rightWheelSpeed, rightMotorDutyCycle, rightMotorPID->p, rightMotorPID->i, rightMotorPID->d, rightMotorPID->lastError);
         }
         else
         {
@@ -221,8 +198,16 @@ int main()
             printf("SPD R: %.2f | DUTY R: %i \n", rightWheelSpeed, MOTOR_getSpeed(MOTOR_RIGHT));
         }
 
-        float val = ACCELEROMETER_detectHump();
+        switch (c)
+        {
+        case 'v':
+            COMMS_sendFloatToM5(leftWheelSpeed);
+            break;
+        case 'b':
+            COMMS_sendFloatToM5(rightWheelSpeed);
+            break;
+        }
 
-        sleep_ms(1000);
+        sleep_ms(200);
     }
 }

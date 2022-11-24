@@ -7,10 +7,7 @@
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
 
-#include "infraredMain.h"
-
-// Define use of Pico LED
-#define GPIO_PIN_LED 25
+#include "infrared.h"
 
 // Define Infrared Sensor Needs
 #define GPIO_PIN_INFRARED_IN1 15
@@ -85,20 +82,12 @@ int compareArray(int a[],const int b[])	{
 }
 
 void INFRARED_init(void) {
-    printf("[Encoder] Init start \n");
+    printf("[Infrared] Init start \n");
 
-    // Initialization
-    gpio_init(GPIO_PIN_LED); 
     gpio_init(GPIO_PIN_INFRARED_IN1);
-
-    // Set if its input or output
-    gpio_set_dir(GPIO_PIN_LED, GPIO_OUT);           // LED out
     gpio_set_dir(GPIO_PIN_INFRARED_IN1, GPIO_IN);   // S1 in
 
-    // Setting initial state
-    gpio_put(GPIO_PIN_LED, 0);  // Off
-
-    printf("[Encoder] Init done \n");
+    printf("[Infrared] Init done \n");
 }
 
 int readyToStartBarcode() {
@@ -119,7 +108,6 @@ void INFRARED_scanning() {
             arrayVar += 1;
             
         }
-        gpio_put(GPIO_PIN_LED, 1);  // On
         // printf("Here is the current time in miliseconds: %i\n", time_us_32()/1000);
     }
     else {
@@ -129,7 +117,6 @@ void INFRARED_scanning() {
             charStartEndCheck[arrayVar] = time_us_32()/1000;
             arrayVar += 1;
         }
-        gpio_put(GPIO_PIN_LED, 0);  // Off
     }
 }
 

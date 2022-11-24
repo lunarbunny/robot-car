@@ -10,11 +10,6 @@
 #define UART_TX_PIN 0
 #define UART_RX_PIN 1
 
-#define KEY_SPEED 1
-#define KEY_HUMP 2
-#define KEY_MAPPING 3
-#define KEY_BARCODE 4
-
 void COMMS_init(void)
 {
     printf("[Comms] Init start \n");
@@ -28,6 +23,30 @@ void COMMS_init(void)
     gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
 
     printf("[Comms] Init done \n");
+}
+
+void COMMS_sendFloatToM5(float speed)
+{
+    char *buffer[255];
+    snprintf(buffer, 255, "{\"speed\":%.2f}\n", speed);
+    uart_puts(UART_ID, buffer);
+}
+
+void COMMS_sendCharToM5(int key, char *str)
+{
+    char *buffer[255]; // value to send over to m5
+    // key 1 = sending hump
+    if (key == 1)
+    {
+        snprintf(buffer, 255, "{\"hump\":%d}\n", str);
+        // key 2 = sending barcode
+    }
+    else if (key == 2)
+    {
+        snprintf(buffer, 255, "{\"barcode\":%d}\n", str);
+        // sending mapping value
+    }
+    uart_puts(UART_ID, buffer);
 }
 
 void COMMS_sendToM5(int key, char *str)
