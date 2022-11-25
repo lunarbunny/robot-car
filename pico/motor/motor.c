@@ -12,8 +12,8 @@ IN3 IN4, EN2 -> Left Motor
 ====== ============= ======
 */
 
-#define GPIO_PIN_PWM_EN1 4
-#define GPIO_PIN_PWM_EN2 5
+#define GPIO_PIN_PWM_EN1 14
+#define GPIO_PIN_PWM_EN2 15
 #define GPIO_PIN_MOTOR_IN1 6
 #define GPIO_PIN_MOTOR_IN2 7
 #define GPIO_PIN_MOTOR_IN3 8

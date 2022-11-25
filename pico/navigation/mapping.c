@@ -1,6 +1,6 @@
 #include "mappinggod.h"
 
-void getTileInfo(mapping_struct *map, int *direction)
+void getTileInfo(mapping_struct *map, int *direction, int *state)
 {
     // Stores FRONT, RIGHT, REAR, LEFT pings. Will contain 0-4, based on number of times wall is detected
     int get_walls_five[4] = {0};
@@ -65,10 +65,13 @@ void getTileInfo(mapping_struct *map, int *direction)
     printf("%d (N) - %d (E) - %d (S) - %d(W)\n", get_walls_five[0], get_walls_five[1], get_walls_five[2], get_walls_five[3]);
 
     map->mapped_count++;
+
+    // Move to mapping state
+    *state = STATE_MAPPING;
 }
 
 // chooses which direction to move in based on tile info
-int chooseMovement(mapping_struct *map)
+void chooseMovement(mapping_struct *map, int *state, int *shared_buffer)
 {
     // printf("%d %d %d %d\n", map->current_position[0], map->start_position[0], map->current_position[1], map->start_position[1]);
     // printf("%d %d %d %d\n", map->maze_info[0].connections[0], map->maze_info[0].connections[1], map->maze_info[2].connections[0], map->maze_info[0].connections[3]);
@@ -76,12 +79,13 @@ int chooseMovement(mapping_struct *map)
 
     // if visited is more than 0 AND car is at start position AND all 4 directions have been visited, exit
     // 4 direction check: !(0 || 0 || 0 || 0), all must either have no connection or be visited to fulfill 0, if all 0, !0 = 1
-    if (map->visited_coords_size > 0 && (map->current_position[0] == map->start_position[0] && map->current_position[1] == map->start_position[1]) && !(
-        (map->maze_info[0].connections[0] == 1 && !checkVisited(map, 0)) || (map->maze_info[0].connections[1] == 1 && !checkVisited(map, 1)) ||
-        (map->maze_info[0].connections[2] == 1 && !checkVisited(map, 2)) || (map->maze_info[0].connections[3] == 1 && !checkVisited(map, 3))))
+    if (map->visited_coords_size > 0 && (map->current_position[0] == map->start_position[0] && map->current_position[1] == map->start_position[1]) && 
+    !((map->maze_info[0].connections[0] == 1 && !checkVisited(map, 0)) || (map->maze_info[0].connections[1] == 1 && !checkVisited(map, 1)) || (map->maze_info[0].connections[2] == 1 && !checkVisited(map, 2)) || (map->maze_info[0].connections[3] == 1 && !checkVisited(map, 3))))
     {
         printf("im leaving!\n");
-        return -1;
+        // Move to sorting map state
+        *state = STATE_NORMALISING;
+        return;
     }
 
     if (!(map->backstepped))
@@ -94,10 +98,7 @@ int chooseMovement(mapping_struct *map)
         map->bot_path[map->bot_path_size][1] = map->current_position[1];
         (map->bot_path_size)++;
     }
-
     map->backstepped = 0;
-
-    int chosen_direction = 0;
 
     // check north, east, south, west for opening, if opening exists check if resultant coord is in visited array.
     // once opening chosen, update current position, but dont actually scan anything, updates will be done in next cycle
@@ -107,30 +108,30 @@ int chooseMovement(mapping_struct *map)
     {
         // no movement on x-axis
         map->current_position[1] = map->current_position[1] - 1;
-        chosen_direction = 0;
+        *shared_buffer = 0;
     }
     else if (checkOpening(map, 1) && !checkVisited(map, 1))
     {
         map->current_position[0] = map->current_position[0] + 1;
         // no movement on y-axis
-        chosen_direction = 1;
+        *shared_buffer = 1;
     }
     else if (checkOpening(map, 2) && !checkVisited(map, 2))
     {
         // no movement on x-axis
         map->current_position[1] = map->current_position[1] + 1;
-        chosen_direction = 2;
+        *shared_buffer = 2;
     }
     else if (checkOpening(map, 3) && !checkVisited(map, 3))
     {
         map->current_position[0] = map->current_position[0] - 1;
         // no movement on y-axis
-        chosen_direction = 3;
+        *shared_buffer = 3;
     }
     else
     {
         // step back once
-        chosen_direction = getBacktrackDirection(map);
+        *shared_buffer = getBacktrackDirection(map);
         (map->bot_path_size)--;
         map->current_position[0] = map->bot_path[map->bot_path_size - 1][0];
         map->current_position[1] = map->bot_path[map->bot_path_size - 1][1];
@@ -139,9 +140,10 @@ int chooseMovement(mapping_struct *map)
         map->backstepped = 1;
     }
 
-    printf("new target: %d (%d,%d)\n", chosen_direction, map->current_position[0], map->current_position[1]);
+    printf("new target: %d (%d,%d)\n", *shared_buffer, map->current_position[0], map->current_position[1]);
 
-    return chosen_direction;
+    // Move to moving state
+    *state = STATE_MOVING;
 }
 
 int checkOpening(mapping_struct *map, int direction)
@@ -169,7 +171,7 @@ int checkVisited(mapping_struct *map, int direction)
             if (map->visited_coords[i][0] == map->current_position[0] && map->visited_coords[i][1] == map->current_position[1] - 1)
             {
                 printf("found match at current: %d,%d checking: %d,%d\n", map->current_position[0], map->current_position[1],
-                       map->visited_coords[i][0], map->visited_coords[i][1] - 1);
+                       map->current_position[0], map->current_position[1] - 1);
                 flag = 1;
                 break;
             }
@@ -181,7 +183,7 @@ int checkVisited(mapping_struct *map, int direction)
             if (map->visited_coords[i][0] == map->current_position[0] + 1 && map->visited_coords[i][1] == map->current_position[1])
             {
                 printf("found match at current: %d,%d checking: %d,%d\n", map->current_position[0], map->current_position[1],
-                       map->visited_coords[i][0] + 1, map->visited_coords[i][1]);
+                       map->current_position[0] + 1, map->current_position[1]);
                 flag = 1;
                 break;
             }
@@ -193,7 +195,7 @@ int checkVisited(mapping_struct *map, int direction)
             if (map->visited_coords[i][0] == map->current_position[0] && map->visited_coords[i][1] == map->current_position[1] + 1)
             {
                 printf("found match at current: %d,%d checking: %d,%d\n", map->current_position[0], map->current_position[1],
-                       map->visited_coords[i][0], map->visited_coords[i][1] + 1);
+                       map->current_position[0], map->current_position[1] + 1);
                 flag = 1;
                 break;
             }
@@ -205,7 +207,7 @@ int checkVisited(mapping_struct *map, int direction)
             if (map->visited_coords[i][0] == map->current_position[0] - 1 && map->visited_coords[i][1] == map->current_position[1])
             {
                 printf("found match at current: %d,%d checking: %d,%d\n", map->current_position[0], map->current_position[1],
-                       map->visited_coords[i][0] - 1, map->visited_coords[i][1]);
+                       map->current_position[0] - 1, map->current_position[1]);
                 flag = 1;
                 break;
             }
@@ -236,7 +238,7 @@ int getBacktrackDirection(mapping_struct *map)
 }
 
 // returns a sorted array of structures. also sets an int pointer's values to the bots 0,0 position.
-void *sortMappedMaze(mapping_struct *map)
+void sortMappedMaze(mapping_struct *map, int *state)
 {
     grid_stats sorted_maze[MAZE_SIZE];
     int smallest_x = 0, smallest_y = 0, largest_x = 0, largest_y = 0;
@@ -280,16 +282,23 @@ void *sortMappedMaze(mapping_struct *map)
         sorted_maze[i].coordinates[0] += -smallest_x;
         sorted_maze[i].coordinates[1] += -smallest_y;
     }
-     printf("sorted maze normalised!\n");
+    printf("sorted maze normalised!\n");
 
-    int bot_pos_x = -smallest_x;
-    int bot_pos_y = -smallest_y;
-    printf("bot position: (%d %d)\n", bot_pos_x, bot_pos_y);
+    // Update actual map struct
+    map->current_position[0] = -smallest_x;
+    map->current_position[1] = -smallest_y;
     for (int i = 0; i < MAZE_SIZE; i++)
     {
-        printf("(%d,%d) %d - %d - %d - %d\n", sorted_maze[i].coordinates[0], sorted_maze[i].coordinates[1],
-               sorted_maze[i].connections[0], sorted_maze[i].connections[1], sorted_maze[i].connections[2], sorted_maze[i].connections[3]);
+        map->maze_info[i].coordinates[0] = sorted_maze[i].coordinates[0];
+        map->maze_info[i].coordinates[1] = sorted_maze[i].coordinates[1];
+        map->maze_info[i].connections[0] = sorted_maze[i].connections[0];
+        map->maze_info[i].connections[1] = sorted_maze[i].connections[1];
+        map->maze_info[i].connections[2] = sorted_maze[i].connections[2];
+        map->maze_info[i].connections[3] = sorted_maze[i].connections[3];
     }
+
+    // Change state to idle
+    *state = STATE_IDLE;
 }
 
 // ensure malloc success, eliminate catastrophic failure.

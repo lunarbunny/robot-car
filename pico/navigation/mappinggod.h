@@ -1,50 +1,37 @@
 #ifndef MAPPINGGOD_H_
 #define MAPPINGGOD_H_
 
-//////////////////////////////////////////////////
-//[navigation header]
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
+#include "pico/stdlib.h"
 #include "../motor/motor.h"
 #include "../motor/pid.h"
+#include "../ultrasonic/ultrasonic.h"
 
-// For movement sensing
-#define ONEUNIT 27
-#define SAFETY_DISTANCE 10
+// Related to movement
+#define ONEUNIT 19
+#define SAFETY_DISTANCE 15
 
 // For mapping and navigation
-#define BUFFER_SIZE 16
 #define MAZE_SIZE 20 // set to x * y of provided maze
 #define MazeConnections 4
 
-// For mapping and navigation
+// States
+#define STATE_IDLE 0		   // State[0]-brb
+#define STATE_SRNDIND 1		   // State[1]-Scanning Surroundings
+#define STATE_MAPPING 2		   // State[2]-Mapping (choosing direction)
+#define STATE_MOVING 3		   // State[3]-Moving
+#define STATE_NORMALISING 4	   // State[4]-Mapping Complete, Sorting map struct
+#define STATE_COMPUTING_PATH 5 // State[5]-Initial computation of best path
+#define STATE_EXECUTING_PATH 6 // State[6]-Giving movement instructions, will alternate between 3 and 6
+
 typedef struct
 {
 	int coordinates[2];
 	int connections[4]; // N, E, S, W
 } grid_stats;
-
-// For mapping
-void populateProvidedMaze(grid_stats[MAZE_SIZE]);
-void mallocChecker(void *);
-
-// For navigation
-void allTraversablePaths(grid_stats[MAZE_SIZE]);
-int checkDirection(grid_stats[MAZE_SIZE], int, int, int);
-int findPath(grid_stats[MAZE_SIZE], int[2], int[2], int[MAZE_SIZE][MAZE_SIZE][2], int[5][4]);
-int isNextPath(grid_stats[MAZE_SIZE], int[2], int[2]);
-void savePath(grid_stats[MAZE_SIZE], int, int[MAZE_SIZE][2], int[MAZE_SIZE][MAZE_SIZE][2], int[2]);
-void enQueue(int, int);
-void deQueue();
-
-//////////////////////////////////////////////////
-//[mapping header]
-
-#include <stdlib.h>
-#include "../ultrasonic/ultrasonic.h"
-
-#define MAZE_SIZE 20 // set to x * y of provided maze
 
 typedef struct
 {
@@ -59,12 +46,35 @@ typedef struct
 	int current_position[2];
 } mapping_struct;
 
-void getTileInfo(mapping_struct *, int *);
-int chooseMovement(mapping_struct *);
+typedef struct
+{
+	int move_count;
+	int current_grid[2];
+	int ending_grid[2];
+	int possible_paths[MAZE_SIZE][MAZE_SIZE][2];
+	int actual_path[MAZE_SIZE][2];
+} compute_path;
+
+// For MAPPING
+// State 1: Scan surroundings
+void getTileInfo(mapping_struct *, int *, int *);
+// State 2: Choose a direction (shared_buffer contains direction to move in)
+void chooseMovement(mapping_struct *, int *, int *);
 int checkVisited(mapping_struct *, int);
 int checkOpening(mapping_struct *, int);
 int getBacktrackDirection(mapping_struct *);
-void *sortMappedMaze(mapping_struct *);
-void mallocChecker(void *);
+// State 4: Sort mapped maze
+void sortMappedMaze(mapping_struct *, int *);
 
+// For NAVIGATION
+void enQueue(int, int);
+void deQueue();
+void computeShortestPath(mapping_struct, compute_path *, int *);
+void findPath(mapping_struct, compute_path *);
+int checkDirection(mapping_struct, int[2], int);
+int isNextPath(mapping_struct, int[2], int[2]);
+void savePath(mapping_struct, compute_path *);
+
+// General
+void mallocChecker(void *);
 #endif

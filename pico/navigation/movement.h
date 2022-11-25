@@ -2,12 +2,10 @@
 #define MOVEMENT_H_
 
 #include "mappinggod.h"
-#include "pico/stdlib.h"
-#include "../motor/motor.h"
-#include "../motor/pid.h"
-#define ONEUNIT 27
 
-void moveTo(int *, int *, int *, int, int);
-void moveDirection(mapping_struct *, int *, int);
+// State 3 - Moving a unit (uses shared_buffer direction to move)
+void moveDirection(mapping_struct *, int *, int *, int *);
+// State 6 - Moving all the way (from navigation)
+void moveLong(compute_path, int *, int *);
 
 #endif
