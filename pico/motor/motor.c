@@ -3,6 +3,7 @@
 #include "hardware/pwm.h"
 
 #include "motor.h"
+#include "pid.h"
 #include "../encoder/encoder.h"
 
 /*
@@ -23,15 +24,21 @@ IN3 IN4, EN2 -> Left Motor
 
 #define MIN_TURN_ANGLE 45
 
-uint pwm_slice;
+static uint pwm_slice;
 
-uint8_t motorSpeedLeft = 0;
-uint8_t motorSpeedRight = 0;
+// Current motor speed
+static uint8_t motorSpeedLeft = 0;
+static uint8_t motorSpeedRight = 0;
 
-int motorDirLeft = -1;
-int motorDirRight = -1;
+// Current motor direction
+static int motorDirLeft = -1;
+static int motorDirRight = -1;
 
-void MOTOR_init(void)
+static struct repeating_timer pidTimer;
+static PID* pidLeft;
+static PID* pidRight;
+
+void MOTOR_init(PID* left, PID* right)
 {
     printf("[Motor] Init start \n");
 
@@ -59,6 +66,9 @@ void MOTOR_init(void)
     MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
 
     pwm_init(pwm_slice, &c, true);
+
+    pidLeft = left;
+    pidRight = right;
 
     printf("[Motor] Init done \n");
 }
@@ -103,7 +113,7 @@ uint MOTOR_getSpeed(int motor)
     }
     else
     {
-        return -1;
+        return 0;
     }
 }
 
@@ -112,7 +122,7 @@ void MOTOR_setDirection(int dir, int motor)
     // Motor 1: IN1 IN2
     // 10 = Forward, 01 = Reverse
     // Motor 2: IN3 IN4
-    // 01 = Forward, 10 = Reverse (Flipped because motor is also physically flipped)
+    // 01 = Forward, 10 = Reverse
     if (dir == MOTOR_DIR_FORWARD)
     {
         if (motor & MOTOR_LEFT)
@@ -214,6 +224,59 @@ void MOTOR_moveFoward(int cm)
 
     // Go forward until step value is reached
     MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
-    ENCODER_waitForISRInterrupts(interrupts); // Wait until turn is done
+    ENCODER_waitForISRInterrupts(interrupts); // Wait until movement is done
     MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);     // Stop when done
+}
+
+bool pidStopCallback(struct repeating_timer *timer)
+{
+    PID_setTargetSpeed(pidLeft, SPEED_NONE);
+    PID_setTargetSpeed(pidRight, SPEED_NONE);
+    return false;
+}
+
+void MOTOR_spotTurnPID(PID *pidLeft, PID *pidRight, int turnDirection, int angle)
+{
+    if (angle < MIN_TURN_ANGLE)
+        angle = MIN_TURN_ANGLE;
+
+    // Ensure angle is a multiple of MIN_TURN_ANGLE
+    int angleError = angle % MIN_TURN_ANGLE;
+    if (angleError > 0)
+    {
+        if (angleError > MIN_TURN_ANGLE / 2)
+        {
+            // Closer to next multiple of MIN_TURN_ANGLE, round up
+            angle += MIN_TURN_ANGLE - angleError;
+        }
+        else
+        {
+            // Closer to last multiple of MIN_TURN_ANGLE, round down
+            angle -= angleError;
+        }
+    }
+
+    int interrupts = 4 * angle / MIN_TURN_ANGLE;
+
+    if (turnDirection == MOTOR_TURN_CLOCKWISE)
+        MOTOR_setRightTurnMode();
+    else if (turnDirection == MOTOR_TURN_ANTICLOCKWISE)
+        MOTOR_setLeftTurnMode();
+
+    PID_setTargetSpeed(pidLeft, SPEED_MEDIUM);
+    PID_setTargetSpeed(pidRight, SPEED_MEDIUM);
+    ENCODER_alertAfterISRInterrupts(interrupts, pidStopCallback); // Setup timer to alert when turn is done
+}
+
+void MOTOR_moveFowardPID(PID *pidLeft, PID *pidRight, int cm)
+{
+    int interrupts = ENCODER_cmToSteps(cm);
+
+    // Set Motor Foward
+    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
+
+    // Go forward until step value is reached
+    PID_setTargetSpeed(pidLeft, SPEED_MEDIUM);
+    PID_setTargetSpeed(pidRight, SPEED_MEDIUM);
+    ENCODER_alertAfterISRInterrupts(interrupts, pidStopCallback); // Setup timer to alert when movement is done
 }

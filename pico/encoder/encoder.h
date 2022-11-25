@@ -9,6 +9,7 @@ float ENCODER_getWheelSpeed(int encoder);
 int ENCODER_getWheelInterruptSpeed(int encoder);
 
 void ENCODER_waitForISRInterrupts(uint target);
+void ENCODER_alertAfterISRInterrupts(uint target, repeating_timer_callback_t callback);
 int ENCODER_cmToSteps(float cm);
 
 #endif

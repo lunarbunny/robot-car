@@ -31,17 +31,17 @@ int main()
 
     printf("===== Starting pico ===== \n");
 
-    // Initialize modules
-    MOTOR_init();
-    ENCODER_init();
-    //INFRARED_init();
-    ACCELEROMETER_init();
-    ULTRASONIC_init();
-    COMMS_init();
-
     // Create PID contoller for motors
     PID *leftMotorPID = PID_create(PID_Kp, PID_Ki, PID_Kd, 0, 0, 100);
     PID *rightMotorPID = PID_create(PID_Kp, PID_Ki, PID_Kd, 0, 0, 100);
+
+    // Initialize modules
+    MOTOR_init(leftMotorPID, rightMotorPID);
+    ENCODER_init();
+    // INFRARED_init();
+    ACCELEROMETER_init();
+    ULTRASONIC_init();
+    COMMS_init();
 
     absolute_time_t currentTime, previousTime, bootTime;
     bootTime = get_absolute_time();
@@ -138,17 +138,21 @@ int main()
             MOTOR_spotTurn(MOTOR_TURN_CLOCKWISE, 90);
             printf("> [Motor] Right Turn \n");
             break;
-        case 'A': // Turn 180 (in place)
-            MOTOR_spotTurn(MOTOR_TURN_ANTICLOCKWISE, 180);
+        case 'A': // Left turn (in place) using PID
+            MOTOR_spotTurnPID(leftMotorPID, rightMotorPID, MOTOR_TURN_ANTICLOCKWISE, 90);
             printf("> [Motor] Turn 180 ANTI-CLK \n");
             break;
-        case 'D': // Turn 180 (in place)
-            MOTOR_spotTurn(MOTOR_TURN_CLOCKWISE, 180);
+        case 'D': // Right turn (in place) using PID
+            MOTOR_spotTurnPID(leftMotorPID, rightMotorPID, MOTOR_TURN_CLOCKWISE, 90);
             printf("> [Motor] Turn 180 CLK \n");
             break;
         case 'x': // Move Foward (10 cm)
             MOTOR_moveFoward(10);
             printf("> [Motor] Move Foward \n");
+            break;
+        case 'X': // Move Foward (10 cm) using PID
+            MOTOR_moveFowardPID(leftMotorPID, rightMotorPID, 10);
+            printf("> [Motor] Move Foward (PID) \n");
             break;
         case 'i': // Front US
             printf("> [US] FRONT: %.2f \n", ULTRASONIC_getCM(ULTRASONIC_FRONT));
@@ -208,6 +212,6 @@ int main()
             break;
         }
 
-        sleep_ms(200);
+        sleep_ms(10);
     }
 }

@@ -15,7 +15,7 @@
 
 const float CM_PER_SLOT = WHEEL_CIRCUMFERENCE_CM / ENCODER_DISC_SLOTS;
 
-struct repeating_timer timer;
+struct repeating_timer timer, isrAlertTimer;
 
 // Wheel speed calculation
 volatile int encIndex = 0;
@@ -59,7 +59,7 @@ void ISR_encoder(uint gpio, uint32_t events)
     }
 }
 
-bool TIMER_callback(struct repeating_timer *timer)
+bool timerCallback(struct repeating_timer *timer)
 {
     /*
     ===== How the speed calculation works =====
@@ -86,7 +86,7 @@ void ENCODER_init(void)
     // Create a repeating timer that calls repeating_timer_callback.
     // If the delay is > 0 then this is the delay between the previous callback ending and the next starting.
     // If the delay is negative then the next call to the callback will be exactly delay ms after the start of the call to the last callback
-    add_repeating_timer_ms(-250, &TIMER_callback, NULL, &timer);
+    add_repeating_timer_ms(-250, &timerCallback, NULL, &timer);
 
     // Setup interrupt, trigger during high to low transition
     gpio_set_irq_enabled_with_callback(GPIO_PIN_ENC_LEFT, GPIO_IRQ_EDGE_FALL, true, &ISR_encoder);
@@ -132,6 +132,34 @@ void ENCODER_waitForISRInterrupts(uint target)
         sleep_ms(10);
 
     enableISRCounter = 0;
+}
+
+bool timerCallbackISRAlert(struct repeating_timer *timer)
+{
+    if (enableISRCounter)
+    {
+        if (encoderISRLeftTargetReached && encoderISRRightTargetReached)
+        {
+            repeating_timer_callback_t callback = (repeating_timer_callback_t)(timer->user_data);
+            enableISRCounter = 0;
+            return callback(timer); // Stops the timer
+        }
+        else
+        {
+            return true;
+        }
+    }
+}
+
+void ENCODER_alertAfterISRInterrupts(uint target, repeating_timer_callback_t callback)
+{
+    // Reset and enable ISR counter
+    encoderISRLeftCounter = encoderISRRightCounter = 0;
+    encoderISRLeftTargetReached = encoderISRRightTargetReached = 0;
+    encoderISRTarget = target;
+    enableISRCounter = 1;
+
+    add_repeating_timer_ms(-10, timerCallbackISRAlert, callback, &isrAlertTimer);
 }
 
 // Convert from centimeters to steps
