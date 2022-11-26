@@ -7,6 +7,6 @@
 #define ULTRASONIC_LEFT 8
 
 void ULTRASONIC_init(void);
-float ULTRASONIC_getCM(int ultrasonic);
+float ULTRASONIC_getCM(int);
 
 #endif

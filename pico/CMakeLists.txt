@@ -20,6 +20,7 @@ add_subdirectory(infrared)
 add_subdirectory(accelerometer)
 add_subdirectory(ultrasonic)
 add_subdirectory(comms)
+add_subdirectory(navigation)
 
 add_executable(robotcar main.c)
 
@@ -27,6 +28,6 @@ pico_enable_stdio_uart(robotcar 0)
 pico_enable_stdio_usb(robotcar 1)
 
 # Link required library to the binary
-target_link_libraries(robotcar motor pid encoder infrared accelerometer ultrasonic comms pico_stdlib)
+target_link_libraries(robotcar motor pid encoder infrared accelerometer ultrasonic comms navigation pico_stdlib)
 
 pico_add_extra_outputs(robotcar)

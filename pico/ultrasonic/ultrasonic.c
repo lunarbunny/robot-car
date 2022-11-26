@@ -54,16 +54,11 @@ float getPulse(uint trigPin, uint echoPin)
 
     uint64_t width = 0;
 
-    printf("[a] %i | %u %u \n", gpio_get(echoPin), trigPin, echoPin);
-
     while (gpio_get(echoPin) == 0)
     startTime = get_absolute_time();
 
-    printf("[b] %i \n", gpio_get(echoPin));
-
     while (gpio_get(echoPin) == 1)
     {
-        printf("[c] %i \n", gpio_get(echoPin));
         width++;
         sleep_us(1);
         if (width > TIMEOUT)

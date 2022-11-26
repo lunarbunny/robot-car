@@ -23,6 +23,7 @@ int MOTOR_getDirection(int motor);
 
 void MOTOR_spotTurn(int turnDirection, int angle);
 void MOTOR_moveFoward(int cm);
+void MOTOR_moveBackward(int cm);
 void MOTOR_spotTurnPID(PID *pidLeft, PID *pidRight, int turnDirection, int angle);
 void MOTOR_moveFowardPID(PID *pidLeft, PID *pidRight, int cm);
 
