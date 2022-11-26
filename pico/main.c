@@ -52,6 +52,9 @@ int main()
 
     float deltaTime; // Time since last loop in seconds
 
+    const float printInterval = 0.25f;
+    float timeSinceLastPrint = 0.f;
+
     uint8_t usePid = 1;
 
     while (1)
@@ -175,6 +178,8 @@ int main()
         leftWheelSpeed = ENCODER_getWheelSpeed(ENCODER_LEFT);
         rightWheelSpeed = ENCODER_getWheelSpeed(ENCODER_RIGHT);
 
+        timeSinceLastPrint += deltaTime;
+
         if (usePid)
         {
             // leftWheelInterruptSpeed = ENCODER_getWheelInterruptSpeed(ENCODER_LEFT);
@@ -192,23 +197,30 @@ int main()
                 MOTOR_setSpeed(rightMotorDutyCycle, MOTOR_RIGHT);
             }
 
-            // printf("PID Delta Time: %.6f (s) \n", deltaTime);
-            printf("T: %.2fs | SP: %.2f | SPD L: %.2f | DUTY L: %u | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", absolute_time_diff_us(bootTime, currentTime) / 1000000.f, leftMotorPID->setPoint, leftWheelSpeed, leftMotorDutyCycle, leftMotorPID->p, leftMotorPID->i, leftMotorPID->d, leftMotorPID->lastError);
-            printf("T: %.2fs | SP: %.2f | SPD R: %.2f | DUTY R: %u | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", absolute_time_diff_us(bootTime, currentTime) / 1000000.f, rightMotorPID->setPoint, rightWheelSpeed, rightMotorDutyCycle, rightMotorPID->p, rightMotorPID->i, rightMotorPID->d, rightMotorPID->lastError);
+            if (timeSinceLastPrint > printInterval)
+            {
+                timeSinceLastPrint = 0.f;
+                printf("T: %.2fs | SP: %.2f | SPD L: %.2f | DUTY L: %u | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", absolute_time_diff_us(bootTime, currentTime) / 1000000.f, leftMotorPID->setPoint, leftWheelSpeed, leftMotorDutyCycle, leftMotorPID->p, leftMotorPID->i, leftMotorPID->d, leftMotorPID->lastError);
+                printf("T: %.2fs | SP: %.2f | SPD R: %.2f | DUTY R: %u | [P]%.2f [I]%.2f [D]%.2f (Err: %.2f) \n", absolute_time_diff_us(bootTime, currentTime) / 1000000.f, rightMotorPID->setPoint, rightWheelSpeed, rightMotorDutyCycle, rightMotorPID->p, rightMotorPID->i, rightMotorPID->d, rightMotorPID->lastError);
+            }
         }
         else
         {
-            printf("SPD L: %.2f | DUTY L: %i \n", leftWheelSpeed, MOTOR_getSpeed(MOTOR_LEFT));
-            printf("SPD R: %.2f | DUTY R: %i \n", rightWheelSpeed, MOTOR_getSpeed(MOTOR_RIGHT));
+            if (timeSinceLastPrint > printInterval)
+            {
+                timeSinceLastPrint = 0.f;
+                printf("SPD L: %.2f | DUTY L: %i \n", leftWheelSpeed, MOTOR_getSpeed(MOTOR_LEFT));
+                printf("SPD R: %.2f | DUTY R: %i \n", rightWheelSpeed, MOTOR_getSpeed(MOTOR_RIGHT));
+            }
         }
 
         switch (c)
         {
         case 'v':
-            COMMS_sendFloatToM5(leftWheelSpeed);
+            COMMS_sendToM5(TX_KEY_SPEED, &leftWheelSpeed);
             break;
         case 'b':
-            COMMS_sendFloatToM5(rightWheelSpeed);
+            COMMS_sendToM5(TX_KEY_SPEED, &rightWheelSpeed);
             break;
         }
 
