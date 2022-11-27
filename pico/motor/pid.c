@@ -20,15 +20,6 @@ PID *PID_create(float kP, float kI, float kD, float setPoint, float min, float m
     return newPID;
 }
 
-int clamp(int input, int min, int max)
-{
-    if (input > max)
-        return max;
-    if (input < min)
-        return min;
-    return input;
-}
-
 float clampF(float input, float min, float max)
 {
     if (input > max)
@@ -38,24 +29,9 @@ float clampF(float input, float min, float max)
     return input;
 }
 
-int normalize(int input)
-{
-    // Motors only have enough torque to start moving at ~80% duty cycle
-    // So we normalize the speed so that the original PID output of 0-100% is
-    // transformed into 80%-100% to fit expected real life speeds.
-    if (input > 0)
-    {
-        return 60 + roundf(input * 0.4f);
-    }
-    else
-    {
-        return 0;
-    }
-}
-
 void PID_setTarget(PID *pid, float setPoint)
 {
-    pid->setPoint = clamp(setPoint, 0.f, 50.f);
+    pid->setPoint = clampF(setPoint, 0.f, 50.f);
 }
 
 void PID_setTargetSpeed(PID *pid, int speed)
@@ -78,7 +54,12 @@ void PID_setTargetSpeed(PID *pid, int speed)
     }
 }
 
-int PID_run(PID *pid, float input, float deltaTime)
+/// @brief PID Controller
+/// @param pid PID controller data 
+/// @param input Current value
+/// @param deltaTime Time in seconds since last controller call
+/// @return PWM duty cycle in percentage (0-100)
+uint PID_run(PID *pid, float input, float deltaTime)
 {
     float error = pid->setPoint - input;
 
@@ -89,10 +70,19 @@ int PID_run(PID *pid, float input, float deltaTime)
 
     pid->d = pid->kD * (error - pid->lastError) / deltaTime;
 
-    int output = pid->p + pid->i + pid->d;
-    output = clamp(output, pid->min, pid->max);
+    float output = pid->p + pid->i + pid->d;
+    output = clampF(output, pid->min, pid->max);
 
     pid->lastError = error;
 
-    return normalize(output);
+    // Motors needs certain % of duty cycle before it has enough torque to start moving.
+    // Normalize the speed so that the original PID output of 0-100% is transformed into 60%-100%.
+    if (output > 0)
+    {
+        return 60 + roundf(output * 0.4f);
+    }
+    else
+    {
+        return 0;
+    }
 }
