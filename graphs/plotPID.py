@@ -12,7 +12,7 @@ file = open('pid.txt')
 for line in file:
     if line.startswith('T'):
         columns = line.split('|')
-        timeSec = float(columns[0][3:-1])
+        timeSec = float(columns[0][3:-2])
         speed = float(columns[2][8:-1])
         setpoint = float(columns[1][5:-1])
         
