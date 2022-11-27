@@ -1,6 +1,0 @@
-eclipse.preferences.version=1
-environment/project/com.ti.ccstudio.buildDefinitions.MSP432.Debug.388759738/CG_TOOL_ROOT/delimiter=\:
-environment/project/com.ti.ccstudio.buildDefinitions.MSP432.Debug.388759738/CG_TOOL_ROOT/operation=replace
-environment/project/com.ti.ccstudio.buildDefinitions.MSP432.Debug.388759738/CG_TOOL_ROOT/value=/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS
-environment/project/com.ti.ccstudio.buildDefinitions.MSP432.Debug.388759738/append=true
-environment/project/com.ti.ccstudio.buildDefinitions.MSP432.Debug.388759738/appendContributed=true
