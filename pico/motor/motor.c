@@ -201,45 +201,50 @@ void MOTOR_spotTurn(int turnDirection, int angle)
         }
     }
 
+    //Motor will turn based on the number of interrupt count
     int interrupts = 4 * angle / MIN_TURN_ANGLE;
     int speed = 80;
 
+    //Motor will turn right/left based on direction set
     if (turnDirection == MOTOR_TURN_CLOCKWISE)
         MOTOR_setRightTurnMode();
     else if (turnDirection == MOTOR_TURN_ANTICLOCKWISE)
         MOTOR_setLeftTurnMode();
 
+    //Turn until interrupt count is reached
     MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
-    ENCODER_waitForISRInterrupts(interrupts); // Wait until turn is done
+    ENCODER_waitForISRInterrupts(interrupts);
     MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);
 }
 
 void MOTOR_moveFoward(int cm)
 {
+    //Convert distance(in cm) to interrupt count
     int interrupts = ENCODER_cmToSteps(cm);
     int speed = 80;
 
-    // Set Motor Foward
+    // Set Motor Direction Foward
     MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
 
-    // Go forward until step value is reached
+    // Go forward until interrupt count is reached
     MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
-    ENCODER_waitForISRInterrupts(interrupts); // Wait until movement is done
-    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);     // Stop when done
+    ENCODER_waitForISRInterrupts(interrupts); 
+    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT); 
 }
 
 void MOTOR_moveBackward(int cm)
 {
+    //Convert distance(in cm) to interrupt count
     int interrupts = ENCODER_cmToSteps(cm);
     int speed = 80;
 
-    // Set Motor Foward
+    // Set Motor Direction Backwards
     MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_LEFT | MOTOR_RIGHT);
 
-    // Go forward until step value is reached
+    // Go Backwards until interrupt count is reached
     MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
-    ENCODER_waitForISRInterrupts(interrupts); // Wait until turn is done
-    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);     // Stop when done
+    ENCODER_waitForISRInterrupts(interrupts); 
+    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);  
 }
 
 bool pidStopCallback(struct repeating_timer *timer)
@@ -270,13 +275,16 @@ void MOTOR_spotTurnPID(PID *pidLeft, PID *pidRight, int turnDirection, int angle
         }
     }
 
+    //Motor will turn based on the number of interrupt count
     int interrupts = 4 * angle / MIN_TURN_ANGLE;
 
+    //Motor will turn right/left based on direction set
     if (turnDirection == MOTOR_TURN_CLOCKWISE)
         MOTOR_setRightTurnMode();
     else if (turnDirection == MOTOR_TURN_ANTICLOCKWISE)
         MOTOR_setLeftTurnMode();
 
+    //Turn until interrupt count is reached
     PID_setTargetSpeed(pidLeft, SPEED_MEDIUM);
     PID_setTargetSpeed(pidRight, SPEED_MEDIUM);
     ENCODER_alertAfterISRInterrupts(interrupts, pidStopCallback); // Setup timer to alert when turn is done
@@ -286,10 +294,10 @@ void MOTOR_moveFowardPID(PID *pidLeft, PID *pidRight, int cm)
 {
     int interrupts = ENCODER_cmToSteps(cm);
 
-    // Set Motor Foward
+    // Set Motor Direction Foward
     MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
 
-    // Go forward until step value is reached
+    // Go forward until interrupt count is reached
     PID_setTargetSpeed(pidLeft, SPEED_MEDIUM);
     PID_setTargetSpeed(pidRight, SPEED_MEDIUM);
     ENCODER_alertAfterISRInterrupts(interrupts, pidStopCallback); // Setup timer to alert when movement is done
