@@ -30,10 +30,10 @@ typedef struct state
     repeating_timer_t pidTimer; // Repeating timer that runs PID controller
 } State;
 
-void togglePid(uint8_t *flag)
+void togglePid(State *state)
 {
-    *flag ^= 1;
-    printf("> [PID] Enabled: %i \n", *flag);
+    state->usePid ^= 1;
+    printf("> [PID] Enabled: %u \n", state->usePid);
 }
 
 bool pidCallback(repeating_timer_t *timer)
@@ -99,7 +99,7 @@ int main()
         switch (c)
         {
         case 'z': // Toggle PID controller
-            togglePid(&state.usePid);
+            togglePid(&state);
             break;
         case 'q': // Slow down (through PID)
             PID_setTargetSpeed(state.leftPID, SPEED_MEDIUM);
@@ -125,38 +125,38 @@ int main()
             break;
         case '1': // 60% Duty cycle
             if (state.usePid)
-                togglePid(&state.usePid);
+                togglePid(&state);
             MOTOR_setSpeed(60, MOTOR_LEFT | MOTOR_RIGHT);
             break;
         case '2': // 70% Duty cycle
             if (state.usePid)
-                togglePid(&state.usePid);
+                togglePid(&state);
             MOTOR_setSpeed(70, MOTOR_LEFT | MOTOR_RIGHT);
             break;
         case '3': // 80% Duty cycle
             if (state.usePid)
-                togglePid(&state.usePid);
+                togglePid(&state);
             MOTOR_setSpeed(80, MOTOR_LEFT | MOTOR_RIGHT);
             break;
         case '4': // 90% Duty cycle
             if (state.usePid)
-                togglePid(&state.usePid);
+                togglePid(&state);
             MOTOR_setSpeed(90, MOTOR_LEFT | MOTOR_RIGHT);
             break;
         case '5': // 100% Duty cycle
             if (state.usePid)
-                togglePid(&state.usePid);
+                togglePid(&state);
             MOTOR_setSpeed(100, MOTOR_LEFT | MOTOR_RIGHT);
             break;
         case 'Q': // Slow down (direct motor control)
             if (state.usePid)
-                togglePid(&state.usePid);
+                togglePid(&state);
             uint8_t prevSpeed = MOTOR_getSpeed(MOTOR_LEFT) - 10;
             MOTOR_setSpeed(prevSpeed, MOTOR_LEFT | MOTOR_RIGHT);
             break;
         case 'E': // Speed up (direct motor control)
             if (state.usePid)
-                togglePid(&state.usePid);
+                togglePid(&state);
             uint8_t nextSpeed = MOTOR_getSpeed(MOTOR_LEFT) + 10;
             MOTOR_setSpeed(nextSpeed, MOTOR_LEFT | MOTOR_RIGHT);
             break;
