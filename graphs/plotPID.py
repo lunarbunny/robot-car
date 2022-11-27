@@ -1,3 +1,4 @@
+import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import make_interp_spline
@@ -7,7 +8,10 @@ graph_speeds_left = []
 graph_speeds_right = []
 graph_setpoints = []
 
-file = open('pid.txt')
+if len(sys.argv) > 1:
+    file = open(sys.argv[1])
+else:
+    file = open('pid.txt')
 
 for line in file:
     if line.startswith('T'):
