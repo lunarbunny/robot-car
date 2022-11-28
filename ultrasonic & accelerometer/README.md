@@ -11,6 +11,11 @@ This submodule contains two components:
 
 This submodule contains two components which is the ultrasonic and accelerometer. The ultrasonic data is filtered using kalman algorithm and the accelerometer is filtered using the moving Average Filter. The kalman in accelerometer library is used to make comparison with the moving average filter algorithm.
 
+
+![accelerometer filter algo analysis_R10_Q0 1](https://user-images.githubusercontent.com/66397701/204321584-c063e1d5-3ded-4b87-8c19-19834dbea8ad.png)
+![moving average filter algo analysis](https://user-images.githubusercontent.com/66397701/204321688-353f5a21-4266-4f67-a328-c91d3a7f5e44.png)
+![ultrasonic filter algo analysis_R10_Q0 1](https://user-images.githubusercontent.com/66397701/204321757-039bc808-44ce-44dc-941f-47b4e4555d5c.png)
+
 Definitions in `ultrasonic.h`:
 ```c
 #ifndef ULTRASONIC_H_
