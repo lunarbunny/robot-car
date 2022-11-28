@@ -1,4 +1,4 @@
-## Motor module
+## Ultrasonic & Accelerometer module
 
 ### Introduction
 
