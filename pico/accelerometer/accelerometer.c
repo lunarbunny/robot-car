@@ -125,7 +125,7 @@ float ACCELEROMETER_detectHump(void)
         mpu6050_read_raw(acc, gyro);
         // convert to angle
         measuredX = atan2(acc[1], acc[2]) * 180 / M_PI;
-        movingAverageX = movingAverageFilter(dataArray, &sum, position, measuredX);
+        predictedX = movingAverageFilter(dataArray, &sum, position, measuredX);
     }
 
     // when angle less than minimum threshold and when slope is finished
