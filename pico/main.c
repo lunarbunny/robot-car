@@ -218,6 +218,7 @@ int main()
         }
 
         state.currentTime = get_absolute_time();
+        // calculating the time interval between previous and current timing
         state.deltaTime = absolute_time_diff_us(state.previousTime, state.currentTime) / 1000000.f;
         state.previousTime = state.currentTime;
 
