@@ -7,7 +7,7 @@ This sub-module library contains:
 1. Motor control logic `motor.c`
 2. PID Controller `pid.c`
 
-### Explaination
+### Explanation
 
 This library provides an interface to the motors through a L298N motor driver.
 
