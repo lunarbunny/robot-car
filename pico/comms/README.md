@@ -33,6 +33,9 @@ After that, the data is sent over to M5StickCPlus as a JSON string. The JSON Str
 
 ## Thingsboard
 Thingsboard is the front-end api that we are using to display our sensor values in visuals. As data is transmitted over, they will be constantly updated in the telemetry and the visuals as well.
+The link to access can be found here: https://demo.thingsboard.io/devices
+
+Please find us for access to the dashboard since we logged in using our student email :>
 
 ### Thingsboard Telemetry
 ![image](https://user-images.githubusercontent.com/90168655/204293281-5bc80281-2ea8-421a-891f-dbadfe74bdf2.png)
