@@ -1,6 +1,6 @@
-# Infrared
+## Infrared Module
 
-## In a nutshell
+### In a nutshell
 Timings are gathered and stored in charStartEndCheck, differences between each charStartEndCheck will be stored in timeChanges. This will be sorted into 1's and 0's representing a character in varcharStartEndStar to be used for decoding.
 ![image](https://user-images.githubusercontent.com/23163333/204268668-e41cc500-3357-4995-8677-cd736ee64443.png)
 
