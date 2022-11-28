@@ -5,8 +5,11 @@
 #define ULTRASONIC_RIGHT 2
 #define ULTRASONIC_REAR 4
 #define ULTRASONIC_LEFT 8
+#define MAXPULSELEN 1044 // 18cm * 58 = 1044us 
 
 void ULTRASONIC_init(void);
-float ULTRASONIC_getCM(int);
+float ULTRASONIC_getCM(int ultrasonic);
+float getCM(uint trigPin, uint echoPin, bool filter);
+int ULTRASONIC_hitWall();
 
 #endif

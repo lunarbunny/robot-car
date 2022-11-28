@@ -6,6 +6,8 @@
 #define SPEED_MEDIUM 2
 #define SPEED_HIGH 3
 
+#define uint unsigned int
+
 typedef struct _PID {
     float kP, kI, kD;
     float setPoint;

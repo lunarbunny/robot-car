@@ -7,16 +7,14 @@
 #include "hardware/i2c.h"
 #include "accelerometer.h"
 
-#define SDA_PIN 4
-#define SCL_PIN 5
-
 // get raw data of acceleration and gyroscope
 int16_t acc[MAXLEN], gyro[MAXLEN];
 int addr = 0x68;
 // record start time when boot pico
 absolute_time_t startTime;
-absolute_time_t startTime1, endTime1;
-bool slope_detect = false;
+
+// measurement and prediction variables
+float measuredX, movingAverageX;
 
 // get predicted angle
 float predictedX;
@@ -32,11 +30,16 @@ float sum = 0.0;
 int position = 0;
 
 // to detect amout of h
+absolute_time_t startTime1;
+absolute_time_t endTime1;
+bool slope_detect = false;
 float triangle_h;
 float height;
-float speed = 30;
-float speed_t;
-float radianHighest, degreeHighest;
+float speed = 3;
+double speed1 = 0;
+double speed2 = 0;
+float radianHighest = 0;
+float degreeHighest = 0;
 
 void ACCELEROMETER_init(void)
 {
@@ -57,102 +60,110 @@ void ACCELEROMETER_init(void)
 
 float filterMeasurement(void)
 {
-    // measurement and prediction variables
-    float measuredX, kalmanX, movingAverageX;
-
-    // complementary initialization
-    // record previous time
-    absolute_time_t prevTime;
-
     absolute_time_t endTime = get_absolute_time();
     // find time difference in micro seconds and convert to seconds
     float diffTime = absolute_time_diff_us(startTime, endTime);
     float diffSeconds = diffTime / 1000000;
 
-    // run for 30s -- FOR NOW --
-    // if (diffSeconds <= (float)10000)
-    // {
     // read raw data from accelerometer
     mpu6050_read_raw(acc, gyro);
     // convert to angle
     measuredX = atan2(acc[1], acc[2]) * 180 / M_PI;
 
-    // kalman filter algorithm
-    kalmanX = kalmanFilter(1, 0.01, measuredX, &Xt_prev, &Pt_prev);
-    float kalmanX2 = kalmanFilter(10, 0.1, measuredX, &Xt_prev, &Pt_prev);
     // moving average filter algorithm
     movingAverageX = movingAverageFilter(dataArray, &sum, position, measuredX);
 
     printf("------------------\n");
-    printf("time: %.2f\n", diffSeconds);
-    printf("int seconds: %d\n", (int)diffSeconds);
-    printf("\n");
     printf("measuredX:\t%.2f\n", measuredX);
-    printf("kalmanX:\t%.2f\n", kalmanX);
-    printf("kalmanX2:\t%.2f\n", kalmanX2);
-    // printf("complementaryX:\t%.2f\n", complementaryX);
     // printf("movingAverageX:\t%.2f\n", movingAverageX);
 
-    prevTime = get_absolute_time();
+    // increment index position of window
     position++;
+    // reset window index position when it hits the length
     if (position >= WINDOWLEN)
     {
         position = 0;
     }
 
-    return kalmanX;
+    return movingAverageX;
 }
 
 float ACCELEROMETER_detectHump(void)
 {
+    // get predicted reading of angle X
     predictedX = filterMeasurement();
 
-    if (predictedX > 0 && predictedX > FIRSTRANGE)
+    // when angle exceeds threshold
+    while (predictedX > FIRSTRANGE)
     {
         // inclination occur
         if (slope_detect == false)
         {
             printf("slope detected\n");
             slope_detect = true;
+            // get start time of first inclination
             startTime1 = get_absolute_time();
         }
-        if (predictedX > degreeHighest)
+        else
         {
-            degreeHighest = predictedX;
-            endTime1 = get_absolute_time();
+            // get highest angle with comparison to current angle
+            if (predictedX >= degreeHighest)
+            {
+                degreeHighest = predictedX;
+                printf("incrementing: %.2f\n", degreeHighest);
+                // endTime1 = get_absolute_time();
+            }
+            else
+            {
+                // get end time of end inclination
+                endTime1 = get_absolute_time();
+                break;
+            }
         }
+
+        // get raw data again
+        mpu6050_read_raw(acc, gyro);
+        // convert to angle
+        measuredX = atan2(acc[1], acc[2]) * 180 / M_PI;
+        movingAverageX = movingAverageFilter(dataArray, &sum, position, measuredX);
     }
-    else if (predictedX < 0 && predictedX < -(FIRSTRANGE))
+
+    // when angle less than minimum threshold and when slope is finished
+    if (predictedX < 0 && slope_detect == true)
     {
-        // declination occur
-        if (slope_detect == true)
-        {
-            radianHighest = degreeHighest * M_PI / 180;
-            printf("go down slope: %.2f\n", radianHighest);
-            slope_detect = false;
-            // endTime1 = get_absolute_time();
-            speed_t = absolute_time_diff_us(startTime1, endTime1);
-            printf("t before: %.2f\n", speed_t);
+        // convert highest angle to radian
+        radianHighest = degreeHighest * M_PI / 180;
+        printf("go down slope: %.2f\n", degreeHighest);
 
-            speed_t = speed_t / 1000000;
-            printf("t after: %.2f\n", speed_t);
-            triangle_h = speed_t * speed;
-            printf("triangle_h (1.5): %.4f\n", triangle_h);
-            printf("sin radian (0.6): %.4f\n", sin(radianHighest));
-            height = triangle_h * sin(radianHighest);
-            printf("height (0.9): %.1f \n", height);
+        // get difference of end time and start time in microseconds
+        speed1 = absolute_time_diff_us(startTime1, endTime1);
+        // printf("t before: %lld\n", startTime1);
 
-            // reset highest degree
-            degreeHighest = 0.0;
-        }
+        // convert time difference to seconds 
+        speed2 = speed1 / 1000000.0;
+        // printf("t before: %lld\n", startTime1);
+        // printf("t after: %lld\n", endTime1);
+        // printf("time diff1: %.3f\n", speed1);
+        printf("time diff2 (0.05): %.3f\n", speed2);
+        // --- start of trigonometry function --- //
+        // get hypothenuse
+        triangle_h = speed2 * speed;
+        printf("triangle_h (1.5): %.4f\n", triangle_h);
+        printf("sin radian (0.6): %.4f\n", sin(radianHighest));
+        // get height of hump using sin
+        height = triangle_h * sin(radianHighest);
+        printf("height (0.9): %.1f \n", height);
+        // reset variables
+        slope_detect = false;
+        degreeHighest = 0;
     }
 
-    if (!slope_detect && degreeHighest)
-    {
-        return -1.f;
-    }
-    else
-        return height;
+    // if (!slope_detect && degreeHighest)
+    // {
+    //     return -1.f;
+    // }
+    // else
+    return height;
 }
 
 // #ifdef i2c_default
@@ -214,9 +225,4 @@ float movingAverageFilter(float *ptrDataArray, float *ptrSum, int position, floa
     ptrDataArray[position] = nextData;
     // return the average
     return *ptrSum / WINDOWLEN;
-}
-
-int hitWall()
-{
-    return 0;
 }

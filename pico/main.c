@@ -94,6 +94,7 @@ int main()
 
     while (1)
     {
+        float val = ACCELEROMETER_detectHump();
         // Read stdin input (via serial terminal over usb)
         uint8_t c = getchar_timeout_us(0);
         switch (c)
@@ -233,6 +234,8 @@ int main()
             break;
         }
 
-        sleep_ms(10);
+        // float val = ACCELEROMETER_detectHump();
+
+        sleep_ms(100);
     }
 }
