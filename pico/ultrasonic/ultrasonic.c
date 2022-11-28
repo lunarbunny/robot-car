@@ -31,22 +31,18 @@ int ultrasonic_position_4 = 0;
 kalman_filter_data_s kalman_data_R10 = {
     /* Transition matrix: 2x2 */
     /* float Phi_matrix[4]; */
-    // {1.0, 0.25e-3, 0.0, 1.0},
     {1.0, 1.0, 0.0, 1.0},
     /* Q covariance plant noise matrix: 2x2 */
     /* float Q_matrix[4]; */
-    // {0.0, 0.0, 0.0, 1082.323},
     {0.1, 0.0, 0.0, 0.1},
     /* Sensitivity matrix: 1X2 */
     /* float H_matrix[2]; */
     {1.0, 0.0},
     /* Observation noise: R covariance matrix 1x1 */
     /* float R_matrix; */
-    // 0.04,
     10,
     /* P plus current covariance matrix 2x2: estimate error */
     /* float P_plus[4]; */
-    // {0.04, 160.0, 160.0, 641082.323},
     {0.0, 0.0, 0.0, 0.0},
     /* x plus current state vector 2x1: value, speed */
     /* float x_plus[2]; */
@@ -114,6 +110,7 @@ float getCM(uint trigPin, uint echoPin, bool filter)
         float kalman_accelerometer, kalman_ultrasonic, movingAverage_3, movingAverage_4;
         if (filter)
         {
+            // filter algorithms
             kalman_accelerometer = kalmanFilter(10, 0.1, pulseLength, &ultrasonic_Xt_prev, &ultrasonic_Pt_prev);
             kalman_ultrasonic = ultrasonic_kalmanFilter(pulseLength, &kalman_data_R10);
             movingAverage_3 = movingAverageFilter(ultrasonic_dataArray_3, &ultrasonic_sum_3, ultrasonic_position_3, pulseLength);
@@ -122,6 +119,7 @@ float getCM(uint trigPin, uint echoPin, bool filter)
             printf("kalman_ultrasonic:\t%.2f\n", kalman_ultrasonic);
             printf("movingAverage_3:\t%.2f\n", movingAverage_3);
             printf("movingAverage_4:\t%.2f\n", movingAverage_4);
+            // increment position index of window
             ultrasonic_position_3++;
             ultrasonic_position_4++;
             // reset window index position when it hits the length
@@ -133,7 +131,8 @@ float getCM(uint trigPin, uint echoPin, bool filter)
             {
                 ultrasonic_position_4 = 0;
             }
-            return movingAverage_4;
+            // using kalman_ultrasonic as final algorithm
+            return kalman_ultrasonic;
         }
         else 
             return pulseLength;
@@ -164,9 +163,11 @@ float ULTRASONIC_getCM(int ultrasonic)
 }
 
 void ULTRASONIC_resetFilter() {
+    // reset window array
     for (int i = 0; i < WINDOWLEN; i++) {
         ultrasonic_dataArray_4[i] = 0.0;
     }
+    // reset variables
     ultrasonic_sum_4 = 0.0;
     ultrasonic_position_4 = 0;
 }

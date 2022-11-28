@@ -10,8 +10,6 @@
 // get raw data of acceleration and gyroscope
 int16_t acc[MAXLEN], gyro[MAXLEN];
 int addr = 0x68;
-// record start time when boot pico
-absolute_time_t startTime;
 
 // measurement and prediction variables
 float measuredX, movingAverageX;
@@ -35,9 +33,9 @@ absolute_time_t endTime1;
 bool slope_detect = false;
 float triangle_h;
 float height;
-float speed = 3;
-double speed1 = 0;
-double speed2 = 0;
+float speed = 27;
+double timeDiff_us = 0;
+double timeDiff_s = 0;
 float radianHighest = 0;
 float degreeHighest = 0;
 
@@ -53,18 +51,11 @@ void ACCELEROMETER_init(void)
 
     mpu6050_reset();
 
-    startTime = get_absolute_time();
-
     printf("[Accelerometer] Init done \n");
 }
 
 float filterMeasurement(void)
 {
-    absolute_time_t endTime = get_absolute_time();
-    // find time difference in micro seconds and convert to seconds
-    float diffTime = absolute_time_diff_us(startTime, endTime);
-    float diffSeconds = diffTime / 1000000;
-
     // read raw data from accelerometer
     mpu6050_read_raw(acc, gyro);
     // convert to angle
@@ -75,7 +66,7 @@ float filterMeasurement(void)
 
     printf("------------------\n");
     printf("measuredX:\t%.2f\n", measuredX);
-    // printf("movingAverageX:\t%.2f\n", movingAverageX);
+    printf("movingAverageX:\t%.2f\n", movingAverageX);
 
     // increment index position of window
     position++;
@@ -94,7 +85,7 @@ float ACCELEROMETER_detectHump(void)
     predictedX = filterMeasurement();
 
     // when angle exceeds threshold
-    while (predictedX > FIRSTRANGE)
+    if (predictedX > FIRSTRANGE)
     {
         // inclination occur
         if (slope_detect == false)
@@ -110,8 +101,6 @@ float ACCELEROMETER_detectHump(void)
             if (predictedX >= degreeHighest)
             {
                 degreeHighest = predictedX;
-                printf("incrementing: %.2f\n", degreeHighest);
-                // endTime1 = get_absolute_time();
             }
             else
             {
@@ -133,36 +122,23 @@ float ACCELEROMETER_detectHump(void)
     {
         // convert highest angle to radian
         radianHighest = degreeHighest * M_PI / 180;
-        printf("go down slope: %.2f\n", degreeHighest);
 
         // get difference of end time and start time in microseconds
-        speed1 = absolute_time_diff_us(startTime1, endTime1);
-        // printf("t before: %lld\n", startTime1);
-
+        timeDiff_us = absolute_time_diff_us(startTime1, endTime1);
         // convert time difference to seconds 
-        speed2 = speed1 / 1000000.0;
-        // printf("t before: %lld\n", startTime1);
-        // printf("t after: %lld\n", endTime1);
-        // printf("time diff1: %.3f\n", speed1);
-        printf("time diff2 (0.05): %.3f\n", speed2);
+        timeDiff_s = timeDiff_us / 1000000.0;
+
         // --- start of trigonometry function --- //
         // get hypothenuse
-        triangle_h = speed2 * speed;
-        printf("triangle_h (1.5): %.4f\n", triangle_h);
-        printf("sin radian (0.6): %.4f\n", sin(radianHighest));
+        triangle_h = timeDiff_s * speed;
         // get height of hump using sin
         height = triangle_h * sin(radianHighest);
-        printf("height (0.9): %.1f \n", height);
+        printf("height: %.1f \n", height);
+        // --- end of trigonometry function --- //
         // reset variables
         slope_detect = false;
         degreeHighest = 0;
     }
-
-    // if (!slope_detect && degreeHighest)
-    // {
-    //     return -1.f;
-    // }
-    // else
     return height;
 }
 
