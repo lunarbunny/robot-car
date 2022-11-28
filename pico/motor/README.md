@@ -11,6 +11,16 @@ This sub-module library contains:
 
 This library provides an interface to the motors through a L298N motor driver.
 
+A PID controller is implemented to control the speed of motors. Each PID controller instance is designed to control a single motor.
+
+The PID feedback loop takes in a target wheel speed (cm/s) and outputs the PWM duty cycle. The feedback loop is depicted in the diagram below:
+
+```
+SP (wheel speed) ↘        -> P ↘
+PV (wheel speed) -> Error -> I -> Controller -> Duty Cycle (0%-100%)
+                          -> D ↗
+```
+
 Definitions in `motor.h`:
 ```c
 #define MOTOR_LEFT 1
