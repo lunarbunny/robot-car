@@ -47,6 +47,9 @@ void MOTOR_moveBackward(int cm);
 void MOTOR_spotTurn(int turnDirection, int angle);
 // Turn on the spot using PID. Non blocking. Angle must be multiple of 45.
 void MOTOR_spotTurnPID(PID *pidLeft, PID *pidRight, int turnDirection, int angle);
+
+// Helper function to convert from CM to number of interrupts.
+int CMtoSteps(float cm);
 ```
 
 Definitions in `pid.h`:
@@ -70,7 +73,7 @@ typedef struct _PID {
 PID* PID_create(float kP, float kI, float kD, float setPoint, float min, float max);
 // Set the new setpoint for a PID controller.
 void PID_setTarget(PID *pid, float setPoint);
-// Shorthand for PID_setTarget using the SPEED_NONE, SPEED_MEDIUM... 
+// Shorthand for PID_setTarget using the SPEED_NONE, SPEED_MEDIUM, etc for predefined speeds.
 void PID_setTargetSpeed(PID *pid, int speed);
 // PID control loop
 uint PID_run(PID* pid, float input, float deltaTime);

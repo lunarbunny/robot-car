@@ -64,17 +64,20 @@ void PID_setTargetSpeed(PID *pid, int speed)
 uint PID_run(PID *pid, float input, float deltaTime)
 {
     float error = pid->setPoint - input;
-    // Proportional Gain X Error
+    
+    // Proportional
     pid->p = pid->kP * error;
 
+    // Integral
     pid->i += pid->kI * error * deltaTime;
     pid->i = clampF(pid->i, -pid->min, pid->max);
 
+    // Deriative
     pid->d = pid->kD * (error - pid->lastError) / deltaTime;
 
     float output = pid->p + pid->i + pid->d;
     output = clampF(output, pid->min, pid->max);
-    // setting the current error to lastError
+    
     pid->lastError = error;
 
     // Motors needs certain % of duty cycle before it has enough torque to start moving.

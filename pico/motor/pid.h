@@ -8,19 +8,23 @@
 
 #define uint unsigned int
 
+// PID controller memory
 typedef struct _PID {
     float kP, kI, kD;
     float setPoint;
     float min, max;
 
-    // Controller memory
     float p, i, d;
     float lastError;
 } PID;
 
+// Create a new PID controller
 PID* PID_create(float kP, float kI, float kD, float setPoint, float min, float max);
+// Set the new setpoint for a PID controller.
 void PID_setTarget(PID *pid, float setPoint);
+// Shorthand for PID_setTarget using the SPEED_NONE, SPEED_MEDIUM, etc for predefined speeds.
 void PID_setTargetSpeed(PID *pid, int speed);
+// PID control loop
 uint PID_run(PID* pid, float input, float deltaTime);
 
 #endif
