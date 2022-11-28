@@ -73,6 +73,7 @@ void MOTOR_init(PID *left, PID *right)
     printf("[Motor] Init done \n");
 }
 
+//Motor speed setter and getter functions
 void MOTOR_setSpeed(uint dutyCycle, int motor)
 {
     if (dutyCycle < 0)
@@ -91,18 +92,11 @@ void MOTOR_setSpeed(uint dutyCycle, int motor)
         pwm_set_chan_level(pwm_slice, PWM_CHAN_B, level);
         motorSpeedRight = dutyCycle;
     }
-
-    // printf("> [MOTOR] Set Speed %u \n", dutyCycle);
-}
-
-void MOTOR_stop(int motor)
-{
-    MOTOR_setSpeed(0, motor);
 }
 
 uint MOTOR_getSpeed(int motor)
 {
-    // Return the duty cycle in percentage
+    // Return motor duty cycle in percentage
     if (motor & MOTOR_LEFT)
     {
         return motorSpeedLeft;
@@ -117,6 +111,7 @@ uint MOTOR_getSpeed(int motor)
     }
 }
 
+//Motor direction setter and getter functions
 void MOTOR_setDirection(int dir, int motor)
 {
     // Motor 1: IN1 IN2
@@ -180,6 +175,20 @@ void MOTOR_setRightTurnMode(void)
     MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_RIGHT);
 }
 
+//Motor Stop Functions
+void MOTOR_stop(int motor)
+{
+    MOTOR_setSpeed(0, motor);
+}
+
+bool pidStopCallback(struct repeating_timer *timer)
+{
+    PID_setTargetSpeed(pidLeft, SPEED_NONE);
+    PID_setTargetSpeed(pidRight, SPEED_NONE);
+    return false;
+}
+
+// Motor Turn Functions
 void MOTOR_spotTurn(int turnDirection, int angle)
 {
     if (angle < MIN_TURN_ANGLE)
@@ -217,43 +226,6 @@ void MOTOR_spotTurn(int turnDirection, int angle)
     MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);
 }
 
-void MOTOR_moveFoward(int cm)
-{
-    //Convert distance(in cm) to interrupt count
-    int interrupts = ENCODER_cmToSteps(cm);
-    int speed = 80;
-
-    // Set Motor Direction Foward
-    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
-
-    // Go forward until interrupt count is reached
-    MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
-    ENCODER_waitForISRInterrupts(interrupts); 
-    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT); 
-}
-
-void MOTOR_moveBackward(int cm)
-{
-    //Convert distance(in cm) to interrupt count
-    int interrupts = ENCODER_cmToSteps(cm);
-    int speed = 80;
-
-    // Set Motor Direction Backwards
-    MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_LEFT | MOTOR_RIGHT);
-
-    // Go Backwards until interrupt count is reached
-    MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
-    ENCODER_waitForISRInterrupts(interrupts); 
-    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);  
-}
-
-bool pidStopCallback(struct repeating_timer *timer)
-{
-    PID_setTargetSpeed(pidLeft, SPEED_NONE);
-    PID_setTargetSpeed(pidRight, SPEED_NONE);
-    return false;
-}
-
 void MOTOR_spotTurnPID(PID *pidLeft, PID *pidRight, int turnDirection, int angle)
 {
     if (angle < MIN_TURN_ANGLE)
@@ -288,6 +260,37 @@ void MOTOR_spotTurnPID(PID *pidLeft, PID *pidRight, int turnDirection, int angle
     PID_setTargetSpeed(pidLeft, SPEED_MEDIUM);
     PID_setTargetSpeed(pidRight, SPEED_MEDIUM);
     ENCODER_alertAfterISRInterrupts(interrupts, pidStopCallback); // Setup timer to alert when turn is done
+}
+
+// Move Specific Distance Functions
+void MOTOR_moveFoward(int cm)
+{
+    //Convert distance(in cm) to interrupt count
+    int interrupts = ENCODER_cmToSteps(cm);
+    int speed = 80;
+
+    // Set Motor Direction Foward
+    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
+
+    // Go forward until interrupt count is reached
+    MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
+    ENCODER_waitForISRInterrupts(interrupts); 
+    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT); 
+}
+
+void MOTOR_moveBackward(int cm)
+{
+    //Convert distance(in cm) to interrupt count
+    int interrupts = ENCODER_cmToSteps(cm);
+    int speed = 80;
+
+    // Set Motor Direction Backwards
+    MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_LEFT | MOTOR_RIGHT);
+
+    // Go Backwards until interrupt count is reached
+    MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
+    ENCODER_waitForISRInterrupts(interrupts); 
+    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);  
 }
 
 void MOTOR_moveFowardPID(PID *pidLeft, PID *pidRight, int cm)

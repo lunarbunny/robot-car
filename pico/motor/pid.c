@@ -20,6 +20,7 @@ PID *PID_create(float kP, float kI, float kD, float setPoint, float min, float m
     return newPID;
 }
 
+//limit the input at the max and min value respectively 
 float clampF(float input, float min, float max)
 {
     if (input > max)
