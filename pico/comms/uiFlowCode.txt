@@ -1,0 +1,22 @@
+from m5stack import *
+from m5ui import *
+from uiflow import *
+from m5mqtt import M5mqtt
+
+setScreenColor(0x111111)
+
+
+y = None
+
+setScreenColor(0xff0000)
+uart1 = machine.UART(1, tx=32, rx=33)
+uart1.init(115200, bits=8, parity=None, stop=1)
+m5mqtt = M5mqtt('m5stickcplus', 'demo.thingsboard.io', 1883, 'm5testuser1', 'test123', 300)
+m5mqtt.start()
+while True:
+  if uart1.any():
+    setScreenColor(0x33ff33)
+    y = str((uart1.readline()).decode())
+    lcd.print(str(y), 0, 0, 0xffffff)
+    m5mqtt.publish(str('v1/devices/me/telemetry'), str((y)), 0)
+    wait_ms(2)
