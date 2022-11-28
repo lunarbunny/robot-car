@@ -7,7 +7,7 @@
 #define GPIO_PIN_ENC_LEFT 2
 #define GPIO_PIN_ENC_RIGHT 3
 
-#define INTERRUPT_BUF_SIZE 4
+#define INTERRUPT_BUF_SIZE 5
 
 #define ENCODER_DISC_SLOTS 20
 #define WHEEL_DIAMETER_CM 6.7                             // Centimeter
@@ -63,18 +63,17 @@ bool timerCallback(struct repeating_timer *timer)
 {
     /*
     ===== How the speed calculation works =====
-    1. Both encoder has its own int[4] buffer
+    1. Both encoder has its own int[4] buffer (+1 for the current buffer, which may not be complete result yet)
     2. A timer is setup to trigger this callback every 0.25s
     3. Stores the amount of interrupts since the last callback
     4. The buffer is filled sequentially with index incremented each time, wrapping back to 0 at max index
     5. The speed is calculated by summing up values in the buffer (average interrupts/second for the last second)
     */
-    leftInterruptBuffer[(encIndex + 1) % INTERRUPT_BUF_SIZE] = 0;
-    rightInterruptBuffer[(encIndex + 1) % INTERRUPT_BUF_SIZE] = 0;
     encIndex++;
     if (encIndex == INTERRUPT_BUF_SIZE)
         encIndex = 0;
-    // printf("0.25s timer up \n");
+    leftInterruptBuffer[encIndex] = 0;
+    rightInterruptBuffer[encIndex] = 0;
     return true;
 }
 
@@ -109,12 +108,20 @@ int ENCODER_getWheelInterruptSpeed(int encoder)
     if (encoder & ENCODER_LEFT)
     {
         for (int i = 0; i < INTERRUPT_BUF_SIZE; i++)
+        {
+            if (i == encIndex)
+                continue;
             total += leftInterruptBuffer[i];
+        }
     }
     else if (encoder & ENCODER_RIGHT)
     {
         for (int i = 0; i < INTERRUPT_BUF_SIZE; i++)
+        {
+            if (i == encIndex)
+                continue;
             total += rightInterruptBuffer[i];
+        }
     }
     return total;
 }
