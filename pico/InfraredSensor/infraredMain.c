@@ -10,10 +10,10 @@
 #include "infraredMain.h"
 
 // Define use of Pico LED
-#define GPIO_PIN_LED 25
+// #define GPIO_PIN_LED 25
 
 // Define Infrared Sensor Needs
-#define GPIO_PIN_INFRARED_IN1 15
+#define GPIO_PIN_INFRARED_IN1 26
 
  // Declarations
 volatile bool infraFlag = true;
@@ -98,15 +98,8 @@ void INFRARED_init(void) {
     printf("[Encoder] Init start \n");
 
     // Initialization
-    gpio_init(GPIO_PIN_LED); 
     gpio_init(GPIO_PIN_INFRARED_IN1);
-
-    // Set if its input or output
-    gpio_set_dir(GPIO_PIN_LED, GPIO_OUT);           // LED out
     gpio_set_dir(GPIO_PIN_INFRARED_IN1, GPIO_IN);   // S1 in
-
-    // Setting initial state
-    gpio_put(GPIO_PIN_LED, 0);  // Off
 
     printf("[Encoder] Init done \n");
 }
