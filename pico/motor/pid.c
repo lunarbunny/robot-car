@@ -32,6 +32,7 @@ float clampF(float input, float min, float max)
 
 void PID_setTarget(PID *pid, float setPoint)
 {
+    // limiting the setpoint (0.f to 50.f only)
     pid->setPoint = clampF(setPoint, 0.f, 50.f);
 }
 
@@ -63,7 +64,7 @@ void PID_setTargetSpeed(PID *pid, int speed)
 uint PID_run(PID *pid, float input, float deltaTime)
 {
     float error = pid->setPoint - input;
-
+    // Proportional Gain X Error
     pid->p = pid->kP * error;
 
     pid->i += pid->kI * error * deltaTime;
@@ -73,7 +74,7 @@ uint PID_run(PID *pid, float input, float deltaTime)
 
     float output = pid->p + pid->i + pid->d;
     output = clampF(output, pid->min, pid->max);
-
+    // setting the current error to lastError
     pid->lastError = error;
 
     // Motors needs certain % of duty cycle before it has enough torque to start moving.
