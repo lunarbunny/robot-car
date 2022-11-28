@@ -133,7 +133,7 @@ float getCM(uint trigPin, uint echoPin, bool filter)
             {
                 ultrasonic_position_4 = 0;
             }
-            return kalman_ultrasonic;
+            return movingAverage_4;
         }
         else 
             return pulseLength;
@@ -161,6 +161,14 @@ float ULTRASONIC_getCM(int ultrasonic)
     {
         return getCM(GPIO_PIN_US_LEFT_TRIGGER, GPIO_PIN_US_LEFT_ECHO, filter);
     }
+}
+
+void ULTRASONIC_resetFilter() {
+    for (int i = 0; i < WINDOWLEN; i++) {
+        ultrasonic_dataArray_4[i] = 0.0;
+    }
+    ultrasonic_sum_4 = 0.0;
+    ultrasonic_position_4 = 0;
 }
 
 int ULTRASONIC_hitWall()

@@ -10,6 +10,7 @@
 void ULTRASONIC_init(void);
 float ULTRASONIC_getCM(int ultrasonic);
 float getCM(uint trigPin, uint echoPin, bool filter);
+void ULTRASONIC_resetFilter();
 int ULTRASONIC_hitWall();
 
 #endif
