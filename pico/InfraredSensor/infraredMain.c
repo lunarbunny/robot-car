@@ -25,9 +25,17 @@ volatile int timeChanges[9];         // Stores the differences in timings
 // Character Logic Variables
 volatile int startReading = 0; 
 int varcharStartEndStar[9]; // Used for only comparing * (starting/ ending characters)
-volatile int countStar = 0;
+volatile int countStar = 0; // Used to count the number of stars
+volatile int compareQ = 0; // Used in remembering the start index of charStartEndCheck (denoising loop through algo)
 char varCharASCII = '~'; // Used for storing main data character
 char finalString[22];   // 1 used for *, 1 to store ending char '/0' if not buffer overflow; 20 char storage
+
+// Denoising
+bool arrayStarNotMatch = true; // true is not match, false is match
+
+// Backwards search 
+bool isBackwards = false;
+
 
 // CODE39 Char Arrays. 1 is LONG bar. 0 is SHORT.
 const int charStartEndStar[9] = {0, 1, 0, 0, 1, 0, 1, 0, 0};
@@ -102,8 +110,8 @@ void INFRARED_init(void) {
 }
 
 int readyToStartBarcode() {
-    // WHITE BAR DETECTED 
-    if (gpio_get(GPIO_PIN_INFRARED_IN1 == 0)) {
+    // WHITE BAR (probably means start of barcode) DETECTED 
+    if (gpio_get(GPIO_PIN_INFRARED_IN1) == 0) {
         readyToStartBarcodeState = true;
         return 1; // For integration into main
     }; 
@@ -115,9 +123,8 @@ void INFRARED_scanning() {
         if (infraFlag == true) {
             infraFlag = false; 
             sleep_us(100); // Delay of at least 10 microseconds NEEDS to be here otherwise it wont work
-            charStartEndCheck[arrayVar] = time_us_32()/1000;
-            arrayVar += 1;
-            
+            charStartEndCheck[arrayVar] = time_us_32()/1000; // Get raw time value from system
+            arrayVar += 1; // arrayVar changes on each color change (B->W or W->B)
         }
         gpio_put(GPIO_PIN_LED, 1);  // On
         // printf("Here is the current time in miliseconds: %i\n", time_us_32()/1000);
@@ -126,8 +133,8 @@ void INFRARED_scanning() {
         if (infraFlag == false) {
             infraFlag = true; 
             sleep_us(100); // Delay of at least 10 microseconds NEEDS to be here otherwise it wont work
-            charStartEndCheck[arrayVar] = time_us_32()/1000;
-            arrayVar += 1;
+            charStartEndCheck[arrayVar] = time_us_32()/1000; // Get raw time value from system
+            arrayVar += 1; // arrayVar changes on each color change (B->W or W->B)
         }
         gpio_put(GPIO_PIN_LED, 0);  // Off
     }
@@ -135,7 +142,11 @@ void INFRARED_scanning() {
 
 
 bool INFRARED_readyToReturnChar() {
-    return (countStar >= 2);
+    if (countStar >= 2) {
+        // arrayStarNotMatch = true; // Return star to not found
+        return true;
+    }
+    else return false;
 }
 const char* INFRARED_returnChar(){
     /* WHEN COUNTSTAR = 2, PRINT THE FINAL STRING HERE */
@@ -145,8 +156,9 @@ const char* INFRARED_returnChar(){
 void INFRARED_resetForNewString() {
     countStar = 0; // Reset count star
     varCharASCII = '~'; // Reset variable
+    arrayStarNotMatch = true; // Set back star as not found
     strcpy(finalString, ""); // Clear contents of string
-    readyToStartBarcodeState = false;
+    readyToStartBarcodeState = false; // Exit barcode state
 }
 
 void INFRARED_decodeCharTree() {
@@ -265,18 +277,14 @@ void INFRARED_decodeCharTree() {
     /* END CHARACTER SORTING */
 
     // Concatenating the characters into var finalString
-    strncat(finalString, &varCharASCII, 1); 
+    if (!arrayStarNotMatch) 
+        strncat(finalString, &varCharASCII, 1); 
 }
 
 bool INFRARED_oneCharRead() {
     return (arrayVar == 10);
 }
 void INFRARED_sortingTimings() {
-    int temp = charStartEndCheck[0]; 
-    for (int i = 0; i < 10; i++) {
-        charStartEndCheck[i] -= temp;
-        // printf("T%i in miliseconds corrected: %i \n", i, charStartEndCheck[i]);
-    }
 
     /* To sort and find out the diff between each time interval */
     for (int i = 0; i < 9; i++) {
@@ -284,13 +292,13 @@ void INFRARED_sortingTimings() {
         // printf("T%i in miliseconds corrected: %i (%i) \n", i, charStartEndCheck[i], timeChanges[i]);
     }
 
-    printf("New char detected\n");
-    arrayVar = 0; // Reset var to start new char reading 
+    // printf("New char detected\n");
+    // arrayVar = 0; // Reset var to start new char reading 
 
-    /* Find if its long or short bars, black or white ooO ooA */
-    int h1 = INT32_MIN; //TOP 1st, index of top 1st
-    int h2 = INT32_MIN; //TOP 2nd, index of top 2nd
-    int h3 = INT32_MIN; //TOP 3rd, index of top 3rd
+    /* Find if its long or short bars */
+    int h1 = INT32_MIN; //Highest Timing, 1st long bar
+    int h2 = INT32_MIN; //2nd Highest Timing, 2nd long bar
+    int h3 = INT32_MIN; //3rd Highest Timing, 3rd long bar
     int h1i, h2i, h3i = 0;
     for(int i = 0; i < 9; i++)
     {
@@ -328,17 +336,39 @@ void INFRARED_sortingTimings() {
         }
     }
 
+
+
     // If character = * || Used to know when to deliver message - By looking at if got starting and ending character
-    if (compareArray(varcharStartEndStar, charStartEndStar)==0 && varCharASCII != '*')
-    {
-        varCharASCII = '*'; // Prevent looping in case of slow reading
-        if (countStar < 2) {
-            countStar ++;
+    if (compareArray(varcharStartEndStar, charStartEndStar)==0) {
+        arrayStarNotMatch = false; // If star is found, change bool
+        if (varCharASCII != '*') {
+            varCharASCII = '*'; // Prevent looping in case of slow reading
+            if (countStar < 2) {
+                countStar ++;
+            }
         }
     }
 
-    // Decode char & add to finalString based on array of timings
-    INFRARED_decodeCharTree(); 
+    // If havent find star, everything left shift 1
+    if (arrayStarNotMatch) {
+        arrayVar = 9; // Change arrayVar to 9 instead of 10 // arrayVar -= 1; 
+        
+        // Move array to the left
+        for (int i = 0; i < 9; i++) {
+            charStartEndCheck[i] = charStartEndCheck[i+1];
+        }
+        charStartEndCheck[9] = 0;
+    }
+
+    // Star has been found once, return to normal scanning
+    else {
+        arrayVar = 0;
+        // INFRARED_decodeCharTree(); 
+        
+    }
+
+    INFRARED_decodeCharTree();  // Decode char & add to finalString based on array of timings
+    printf("COUNTSRARS: %d\n", countStar);  
 }
 
 
@@ -348,8 +378,14 @@ int main () {
     // Main loop
     while (true) {
 
+        // Scanning of B/W
+        readyToStartBarcode(); // If white detected, used to move to barcode state in integration
+        if(readyToStartBarcodeState == true) {
+            INFRARED_scanning(); 
+        }
+
+        // One char has been read, sort the timings
         if (INFRARED_oneCharRead()) {
-            // One char has been read, sort the timings
             INFRARED_sortingTimings();
         }
 
@@ -359,14 +395,5 @@ int main () {
             INFRARED_returnChar());
             INFRARED_resetForNewString(); // After getting final value, reset everything to be able to read a new char/string.
         }
-
-        // Scanning of B/W
-        readyToStartBarcode();
-        if(readyToStartBarcodeState == true) {
-            INFRARED_scanning();
-        }
-        
-
     }
-
 }
