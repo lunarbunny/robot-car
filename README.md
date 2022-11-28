@@ -9,6 +9,20 @@ An embedded systems project.
 
 ###### &#128193; pico
 A CMake project containing the source code.
+Divided into sub-folders each containing one sub-module, depicted below.
+```bash
+pico
+├── accelerometer
+├── comms
+├── encoder
+├── infrared
+├── motor (PWM + PID controller)
+├── navigation
+├── ultrasonic
+└── main.c (program entry point)
+```
+
+A `README.md` can be found in each sub-module folder with explaination for each module. 
 
 ###### &#128193; graph
 Python scripts used to plot graphs.
@@ -21,6 +35,16 @@ Python scripts used to plot graphs.
 * 1x Accelerometer
 * 4x HC-SR04 Ultrasonic Sensor
 * 1x M5StickC
+
+##### Pin Layout
+| Hardware | GPIO # |
+|---|---|
+| M5StickC | 0 - UART (TX) <br/> 1 - UART (RX) |
+| Encoder | 2 - Left Motor <br/> 3 - Right Motor |
+| Accelerometer | 4 - I2C (SDA) <br/> 5 - I2C (SDL) |
+| Motor Control | 6 - IN1 <br/> 7 - IN2 <br/> 8 - IN3 <br/> 9 - IN4|
+| Motor PWM | 14 - Left Motor <br/> 15 - Right Motor |
+| Infrared | 26 - Digital IN |
 
 ##### Software
 Follow the instructions for setting up PicoSDK for your OS.
@@ -72,7 +96,7 @@ https://github.com/raspberrypi/pico-sdk
     </td>
   </tr>
   <tr>
-    <td>Mapping and Navigation</td>
+    <td>Mapping &<br/>Navigation</td>
     <td>
     Maximus Lee Zhi Qin
     <br/>
