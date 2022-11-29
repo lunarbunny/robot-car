@@ -106,7 +106,6 @@ float ACCELEROMETER_detectHump(void)
             {
                 // get end time of end inclination
                 endTime1 = get_absolute_time();
-                break;
             }
         }
 
