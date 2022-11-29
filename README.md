@@ -7,6 +7,12 @@ An embedded systems project.
 
 ##### Directory Structure
 
+###### &#128193; graph
+Python scripts used to plot graphs.
+
+###### &#128193; individual
+Contains code and test data from individual sub-module teams.
+
 ###### &#128193; pico
 A CMake project containing the source code.
 Divided into sub-folders each containing one sub-module, depicted below.
@@ -23,9 +29,6 @@ pico
 ```
 
 A `README.md` can be found in each sub-module folder with explaination for each module. 
-
-###### &#128193; graph
-Python scripts used to plot graphs.
 
 ##### Hardware
 * Raspberry Pico
