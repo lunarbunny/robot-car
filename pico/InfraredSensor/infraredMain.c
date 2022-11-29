@@ -1,3 +1,7 @@
+// MUST BE RUN FROM DEV CONSOLE: type Code and it will launch vsCode but you can build.
+// Build settings can be found in the bottom bar of vscode. It should be
+// using [GCC 10.3.1 arm-none-eabi] as the active kit and [infraredMain] as the the build target.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,7 +17,7 @@
 // #define GPIO_PIN_LED 25
 
 // Define Infrared Sensor Needs
-#define GPIO_PIN_INFRARED_IN1 26
+#define GPIO_PIN_INFRARED_IN1 15
 
  // Declarations
 volatile bool infraFlag = true;
@@ -121,7 +125,6 @@ void INFRARED_scanning() {
             charStartEndCheck[arrayVar] = time_us_32()/1000; // Get raw time value from system
             arrayVar += 1; // arrayVar changes on each color change (B->W or W->B)
         }
-        gpio_put(GPIO_PIN_LED, 1);  // On
         // printf("Here is the current time in miliseconds: %i\n", time_us_32()/1000);
     }
     else {
@@ -131,7 +134,6 @@ void INFRARED_scanning() {
             charStartEndCheck[arrayVar] = time_us_32()/1000; // Get raw time value from system
             arrayVar += 1; // arrayVar changes on each color change (B->W or W->B)
         }
-        gpio_put(GPIO_PIN_LED, 0);  // Off
     }
 }
 
@@ -421,7 +423,7 @@ void INFRARED_sortingTimings() {
         timeChanges[i] = charStartEndCheck[i+1] - charStartEndCheck[i]; // Differences in each timing captured
         // printf("T%i in miliseconds corrected: %i (%i) \n", i, charStartEndCheck[i], timeChanges[i]);
         if (timeChanges[i] > TIMEOUT) {
-            // printf("Barcode reading cancelled, stayed at one spot for too long.");
+            printf("Barcode reading cancelled, stayed at one spot for too long.");
             INFRARED_resetForNewString();
             break;
         }
@@ -508,7 +510,7 @@ void INFRARED_sortingTimings() {
     }
 
     INFRARED_decodeCharTree();  // Decode char & add to finalString based on array of timings
-    // printf("COUNTSTARS: %d\n", countStar);  
+    printf("COUNTSTARS: %d\n", countStar);  
 }
 
 
